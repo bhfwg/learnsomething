@@ -12,6 +12,9 @@ import signal
 import time
 from datetime import datetime, timedelta
 import gettext
+import sysmontimer
+import sysmonlimits
+
 gettext.install(__appname__)
 try:
 	import curses
@@ -172,7 +175,13 @@ def init():
 			print _("Error: CSV export (-o csv) need"
 				"output file definition (-<file>)")
 			sys.exit(2)
-		
+	
+	signal.signal(signal.SIGINT, signal_handler)
+	limits = sysmonlimits()
+	logs = sysmonlogs()
+	stats = sysmonstats()
+
+
 def main():
 	print _("-------------------sysmonitor start--------------------")
 	init()
@@ -186,9 +195,16 @@ def main():
 			csvoutput.update(stats)
 	print _("-------------------sysmonitor end--------------------")
 '''
+
 def end():
 	screen.end()
 	print _("-------------------sysmonitor end--------------------")
+	if csv_tag:
+		csvoutput.exit()
+	sys.exit(0)
+
+def signal_handler(signal, frame):
+	end()
 
 if __name__ == "__main__":
 	main()
