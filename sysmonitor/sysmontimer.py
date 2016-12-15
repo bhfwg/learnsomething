@@ -1,4 +1,5 @@
 import time
+from datetime  import timedelta
 class sysmontimer:
 	''' the timer class '''
 	def __init__(self,duration):
