@@ -55,7 +55,7 @@ class sysmonlogs:
 					self.logs_list[item_index][2] = item_state
 				if item_value > self.logs_list[item_index][4]:
 					self.logs_list[item_index][4] = item_value
-				elif item_value < self.logs_list[item_index][6]
+				elif item_value < self.logs_list[item_index][6]:
 					self.logs_list[item_index][6] = item_value
 
 				self.logs_list[item_index][7] += item_value
@@ -65,3 +65,6 @@ class sysmonlogs:
 
 
 		return self.len()
+
+if __name__ == '__main__':
+	pass

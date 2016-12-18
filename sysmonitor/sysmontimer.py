@@ -9,3 +9,5 @@ class sysmontimer:
 	def finished(self):
 		return time.time() > self.target
 	
+if __name__ == '__main__':
+	pass

@@ -1,5 +1,6 @@
 class sysmonlimits:
 	'''manage the limit OK, CAREFUL, WARNING, CRITICAL for each states'''
+
 	__limits_list = {'STD':[50,70,90], 'LOAD':[0.7,1.0,5.0]}
 	
 	def __init__(self,careful=50, warning=70, critical=90):
@@ -27,3 +28,6 @@ class sysmonlimits:
 	
 	def getLOADCritical(self,core=1):
 		return self.__limits_list['LOAD'][2] * core
+
+if __name__ == '__main__':
+	pass

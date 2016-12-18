@@ -1,7 +1,7 @@
 import psutil as ps
 class sysmongrabfs:
-	''' get fs state
-	'''
+	''' get fs state'''
+
 	def __init__(self):
 		self.ignore_fsname = ('', 'none', 'gvfs_fuse-daemon', 'fusectl','cgroup')
 		self.ignore_fstype = ('binfmt_misc', 'devpts', 'iso9660', 'none', 'proc', 'sysfs', 'usbfs','rootfs','autpfs','devtmpfs')
@@ -31,3 +31,6 @@ class sysmongrabfs:
 	def get(self):
 		self.__update__()
 		return self.fs_list
+
+if __name__ == '__main__':
+	pass

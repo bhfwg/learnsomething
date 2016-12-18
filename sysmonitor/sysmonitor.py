@@ -12,8 +12,11 @@ import signal
 import time
 from datetime import datetime, timedelta
 import gettext
-import sysmontimer
-import sysmonlimits
+from sysmonlimits import sysmonlimits
+from sysmonlogs import sysmonlogs
+from sysmonstats import sysmonstats
+from sysmoncsv import sysmoncsv
+from sysmondisplay import sysmondisplay
 
 gettext.install(__appname__)
 try:
@@ -81,6 +84,7 @@ except ImportError:
 else:
 	csvlib_tag = True
 
+print
 print 'ps_get_cpu_percent_tag=', ps_get_cpu_percent_tag
 print 'ps_mem_usage_tag=', ps_mem_usage_tag
 print 'ps_fs_usage_tag=', ps_fs_usage_tag
@@ -88,7 +92,7 @@ print 'ps_disk_io_tag=',ps_disk_io_tag
 print 'ps_network_io_tag=',ps_network_io_tag
 print 'jinjia_tag=', jinjia_tag 
 print 'csvlib_tag=', csvlib_tag 
-
+print
 
 def printVersion():
 	print _("sysmonitor version : ") + __version__
@@ -165,8 +169,7 @@ def init():
 		try:
 			output_folder
 		except UnboundLocalError:
-			print _("Error: HTML export (-o html) need"
-				"output folder definition (-f <folder>)")
+			print _("Error: HTML export (-o html) need output folder definition (-f <folder>)")
 			sys.exit(2)
 	if csv_tag:
 		try:
@@ -181,11 +184,16 @@ def init():
 	logs = sysmonlogs()
 	stats = sysmonstats()
 
+	if html_tag:
+		htmloutput = sysmonhtml(htmlfolder= output_folder,refresh_time = refresh_time)
+	if csv_tag:
+		csvoutput = sysmoncsv(csvfile =output_file,refresh_time=refresh_time)
+
+	screen = sysmondisplay(refresh_time=refresh_time)
 
 def main():
 	print _("-------------------sysmonitor start--------------------")
 	init()
-'''
 	while True:
 		stats.update()
 		screen.update(stats)
@@ -194,7 +202,6 @@ def main():
 		if csv_tag:
 			csvoutput.update(stats)
 	print _("-------------------sysmonitor end--------------------")
-'''
 
 def end():
 	screen.end()

@@ -131,3 +131,5 @@ class glanceshtml:
 
             # Close the file
             f.close()
+if __name__ == '__main__':
+	pass
