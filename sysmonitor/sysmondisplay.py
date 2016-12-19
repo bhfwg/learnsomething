@@ -3,12 +3,16 @@ from sysmonstats import sysmonstats
 from sysmontimer import sysmontimer
 class sysmondisplay:
 	def __init__(self, refresh_time =1):
-		global __version__
-		global ps_network_io_tag
-		global ps_disk_io_tag
-		global ps_fs_usage_tag
-		
-		self.__version = __version__
+		#global ps_network_io_tag
+		#global ps_disk_io_tag
+		#global ps_fs_usage_tag
+                #global ps_cpu_percent_tag
+
+		self.network_tag = ps_network_io_tag
+		self.diskio_tag = ps_disk_io_tag
+		self.fs_tag = ps_fs_usage_tag
+                self.cpu_tag = ps_cpu_percent_tag
+
 		self.term_w = 80
 		self.term_h = 24
 		self.system_x = 0
@@ -114,9 +118,6 @@ class sysmondisplay:
 			'CRITICAL':self.ifCRITICAL_color2
 			}
 		
-		seelf.network_tag = ps_network_io_tag
-		self.diskio_tag = ps_disk_io_tag
-		self.fs_tag = ps_fs_usage_tag
 		self.log_tag = True
 		self.help_tag = False
 
@@ -214,11 +215,11 @@ class sysmondisplay:
 			end() #ESC or q
 		elif self.presskey== 97:
 			self.setProcessSortedBy('auto') #a
-		elif self.presskey == 99 and ps_get_cpu_percent_tag:
+		elif self.presskey == 99 and cpu_tag:
 			self.setProcessSortedBy('cpu_percent') #c
-		elif self.presskey == 100 and ps_disk_io_tag: 
+		elif self.presskey == 100 and disk_tag: 
 			self.diskio_tag = not self.diskio_tag  #d
-		elif self.presskey == 102 or ps_fs_usage_tag:
+		elif self.presskey == 102 or fs_tag:
 			self.fs_tag = not self.fs_tag #f
 		elif self.presskey == 104:
 			self.help_tag = not self.help_tag #h
@@ -226,7 +227,7 @@ class sysmondisplay:
 			self.log_tag = not self.log_tag #l
 		elif self.presskey == 109:
 			self.setProcessSortedBy('mem_percent') #m
-		elif (self.presskey == 110 or ps_network_io_tag):
+		elif (self.presskey == 110 or network_tag):
 			self.network_tag = not self.network_tag #n
 		elif self.pressedkey == 112:
 			self.setProcessSortedB('proc_name')

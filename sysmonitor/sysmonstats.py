@@ -214,7 +214,7 @@ class sysmonstats:
 						procstate = {}
 						procstate['proc_size'] = proc.get_memory_info().vms
 						procstate['proc_resident'] = proc.get_memory_info().rss
-						if ps_get_cpu_percent_tag:
+						if ps_cpu_percent_tag:
 							procstate['cpu_percent'] =  proc.get_cpu_percent(interval=0)
 						procstate['mem_percent'] = proc.get_memory_percent()
 						procstate['pid']=proc.pid
@@ -290,7 +290,7 @@ class sysmonstats:
 		global limits
 		sortedReverse=True
 		if sortedby == 'auto':
-			if ps_get_cpu_percent_tag:
+			if ps_cpu_percent_tag:
 				sortedby = 'cpu_percent'
 			else:
 				sortedby = 'mem_percent'
