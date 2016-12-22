@@ -4,11 +4,11 @@ __appname__ = 'sysmonitor';
 __version__ = '1.0'
 __author__ = 'bhfwg'
 __license__ = 'LGPL'
-global ps_cpu_percent_tag
-global ps_mem_usage_tag
-global ps_fs_usage_tag
-global ps_disk_io_tag
-global ps_network_io_tag
+#global ps_cpu_percent_tag
+#global ps_mem_usage_tag
+#global ps_fs_usage_tag
+#global ps_disk_io_tag
+#global ps_network_io_tag
 
 import os
 import sys
@@ -23,6 +23,7 @@ from sysmonlogs import sysmonlogs
 from sysmonstats import sysmonstats
 from sysmoncsv import sysmoncsv
 from sysmondisplay import sysmondisplay
+import myglobal
 
 gettext.install(__appname__)
 try:
@@ -42,39 +43,39 @@ except ImportError:
 try:
 	ps.Process(os.getpid()).get_cpu_percent(interval=0)
 except Exception:
-	ps_cpu_percent_tag = False
+	myglobal.set_ps_cpu_percent_tag(False)
 else:
-	ps_cpu_percent_tag = True
+	myglobal.set_ps_cpu_percent_tag (True)
 
 try:
 	ps.phymem_usage()
 	ps.virtmem_usage()
 except Exception:
-	ps_mem_usage_tag = False
+	myglobal.set_ps_mem_usage_tag(False)
 else:
-	ps_mem_usage_tag = True 
+	myglobal.set_ps_mem_usage_tag(True )
 
 try:
 	ps.disk_partitions()
 	ps.disk_usage('/')
 except Exception:
-	ps_fs_usage_tag = False
+	myglobal.set_ps_fs_usage_tag(False)
 else:
-	ps_fs_usage_tag = True
+	myglobal.set_ps_fs_usage_tag(True)
 
 try:
 	ps.disk_io_counters()
 except Exception:
-	ps_disk_io_tag = False
+	myglobal.set_ps_disk_io_tag(False)
 else:
-	ps_disk_io_tag = True
+	myglobal.set_ps_disk_io_tag(True)
 
 try:
-	ps_network_io_counters()
+	ps.network_io_counters()
 except Exception:
-	ps_network_io_tag = False
+	myglobal.set_ps_network_io_tag(False)
 else:
-	ps_network_io_tag = True
+	myglobal.set_ps_network_io_tag(True)
 
 try:
 	import jinja2
@@ -91,11 +92,11 @@ else:
 	csvlib_tag = True
 
 print
-print 'ps_cpu_percent_tag=', ps_cpu_percent_tag
-print 'ps_mem_usage_tag=', ps_mem_usage_tag
-print 'ps_fs_usage_tag=', ps_fs_usage_tag
-print 'ps_disk_io_tag=',ps_disk_io_tag
-print 'ps_network_io_tag=',ps_network_io_tag
+print 'ps_cpu_percent_tag=', myglobal.get_ps_cpu_percent_tag()
+print 'ps_mem_usage_tag=',myglobal.get_ps_mem_usage_tag()
+print 'ps_fs_usage_tag=', myglobal.get_ps_fs_usage_tag()
+print 'ps_disk_io_tag=',myglobal.get_ps_disk_io_tag()
+print 'ps_network_io_tag=',myglobal.get_ps_network_io_tag()
 print 'jinjia_tag=', jinjia_tag 
 print 'csvlib_tag=', csvlib_tag 
 print
@@ -116,7 +117,6 @@ def printSyntax():
 	print _("\t-v\t\tDisplay the version and exit")	
 	
 def init():
-	global ps_disk_io_tag, ps_fs_usage_tag, ps_network_io_tag
 	global limits, logs, stats, screen
 	global htmloutput, csvoutput
 	global html_tag, csv_tag
@@ -163,11 +163,11 @@ def init():
 				print _("Error: Refresh time should be a positive integer")
 				sys.exit(2)
 		elif opt in ("d", "--diskio"):
-			ps_disk_io_tag = Flase
+			myglobal.set_ps_disk_io_tag(False)
 		elif opt in ("-m", "--mount"):
-			ps_fs_usage_tag = False
+			myglobal.set_ps_fs_usage_tag(False)
 		elif opt in ("-n", "--netrate"):
-			ps_network_io_tag = False
+			myglobal.set_ps_network_io_tag(False)
 		else:
 			printSyntax()
 			sys.exit(0)

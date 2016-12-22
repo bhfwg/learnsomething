@@ -1,6 +1,7 @@
 from sysmongrabfs import sysmongrabfs
 from sysmonlimits import sysmonlimits
 import psutil as ps
+import myglobal
 class sysmonstats:
 	'''this class store, update and give stats
 	'''
@@ -117,12 +118,12 @@ class sysmonstats:
 			self.memswap={}
 
 		#Net
-		if ps_network_io_tag:
+		if myglobal.get_ps_network_io_tag():
 			slef.network = []
 			try:
 				self.network_old
 			except Exception:
-				if ps_network_io_tag:
+				if myglobal.get_ps_network_io_tag():
 					self.network_old = ps.network_io_counters(True)
 				else:
 					try:
@@ -143,12 +144,12 @@ class sysmonstats:
 						self.network_old = self.network_new
 		
 		#disk io
-		if ps_disk_io_tag:
+		if myglobal.get_ps_disk_io_tag():
 			self.diskio=[]
 			try:
 				self.diskio_old
 			except Exception:
-				if ps_disk_io_tag:
+				if myglobal.get_ps_disk_io_tag():
 					self.diskio_old = ps.disk_io_counters(True)
 				else:
 					try:
@@ -169,7 +170,7 @@ class sysmonstats:
 						self.diskio_old = self.diskio_new
 
 		#file system
-		if ps_fs_usage_tag:
+		if myglobal.get_ps_fs_usage_tag():
 			try:
 				self.fs=self.sysmongrabfs.get()
 			except Exception:
@@ -214,7 +215,7 @@ class sysmonstats:
 						procstate = {}
 						procstate['proc_size'] = proc.get_memory_info().vms
 						procstate['proc_resident'] = proc.get_memory_info().rss
-						if ps_cpu_percent_tag:
+						if myglobal.get_ps_cpu_percent_tag():
 							procstate['cpu_percent'] =  proc.get_cpu_percent(interval=0)
 						procstate['mem_percent'] = proc.get_memory_percent()
 						procstate['pid']=proc.pid
@@ -266,19 +267,19 @@ class sysmonstats:
 		return self.memswap
 
 	def getNetWork(self):
-		if ps_network_io_tag:
+		if myglobal.get_ps_network_io_tag():
 			return sorted(self.network,key=lambda network: network['interface_name'])
 		else:
 			return 0
 
 	def getDiskIo(self):
-		if ps_disk_io_tag:
+		if myglobal.get_ps_disk_io_tag():
 			return sorted(self.diskio,key=lambda diskio:diskio['disk_name'])
 		else:
 			return 0
 
 	def getFs(self):
-		if ps_fs_usage_tag:
+		if myglobal.get_ps_fs_usage_tag():
 			return sorted(seld.fs, key=lambda fs: fs['mnt_point'])
 		else:
 			return 0
@@ -290,7 +291,7 @@ class sysmonstats:
 		global limits
 		sortedReverse=True
 		if sortedby == 'auto':
-			if ps_cpu_percent_tag:
+			if myglobal.get_ps_cpu_percent_tag():
 				sortedby = 'cpu_percent'
 			else:
 				sortedby = 'mem_percent'

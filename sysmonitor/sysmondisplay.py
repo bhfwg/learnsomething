@@ -1,6 +1,7 @@
 import curses
 from sysmonstats import sysmonstats
 from sysmontimer import sysmontimer
+import myglobal
 class sysmondisplay:
 	def __init__(self, refresh_time =1):
 		#global ps_network_io_tag
@@ -8,10 +9,10 @@ class sysmondisplay:
 		#global ps_fs_usage_tag
                 #global ps_cpu_percent_tag
 
-		self.network_tag = ps_network_io_tag
-		self.diskio_tag = ps_disk_io_tag
-		self.fs_tag = ps_fs_usage_tag
-                self.cpu_tag = ps_cpu_percent_tag
+		self.network_tag = myglobal.get_ps_network_io_tag()
+		self.diskio_tag = pmyglobal.get_ps_disk_io_tag()
+		self.fs_tag = myglobal.get_ps_fs_usage_tag()
+                self.cpu_tag = myglobal.get_ps_cpu_percent_tag()
 
 		self.term_w = 80
 		self.term_h = 24
