@@ -4,6 +4,12 @@ __appname__ = 'sysmonitor';
 __version__ = '1.0'
 __author__ = 'bhfwg'
 __license__ = 'LGPL'
+global ps_cpu_percent_tag
+global ps_mem_usage_tag
+global ps_fs_usage_tag
+global ps_disk_io_tag
+global ps_network_io_tag
+
 import os
 import sys
 import platform
@@ -36,9 +42,9 @@ except ImportError:
 try:
 	ps.Process(os.getpid()).get_cpu_percent(interval=0)
 except Exception:
-	ps_get_cpu_percent_tag = False
+	ps_cpu_percent_tag = False
 else:
-	ps_get_cput_percent_tag = True
+	ps_cpu_percent_tag = True
 
 try:
 	ps.phymem_usage()
@@ -85,7 +91,7 @@ else:
 	csvlib_tag = True
 
 print
-print 'ps_get_cpu_percent_tag=', ps_get_cpu_percent_tag
+print 'ps_cpu_percent_tag=', ps_cpu_percent_tag
 print 'ps_mem_usage_tag=', ps_mem_usage_tag
 print 'ps_fs_usage_tag=', ps_fs_usage_tag
 print 'ps_disk_io_tag=',ps_disk_io_tag
