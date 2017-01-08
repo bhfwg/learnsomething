@@ -1,3 +1,6 @@
+from datetime import datetime
+import os
+import platform
 from sysmongrabfs import sysmongrabfs
 from sysmonlimits import sysmonlimits
 import psutil as ps
@@ -17,7 +20,7 @@ class sysmonstats:
 		self.host['os_name'] = platform.system()
 		self.host['hostname'] = platform.node()
 		self.host['platform'] = platform.architecture()[0]
-		is_archlinux = os.path.exit(os.path.join('/','etc','arch-release'))
+		is_archlinux = os.path.exists(os.path.join('/','etc','arch-release'))
 		
 		try:
 			if self.host['os_name'] == 'linux':
@@ -103,7 +106,7 @@ class sysmonstats:
 		#Mem
 		try:
 			cachemem = ps.cached_phymem() + ps.phymem_buffers()
-		except Excepton:
+		except Exception:
 			cachemem = 0
 		try:
 			phymem=ps.phymem_usage()
@@ -197,7 +200,7 @@ class sysmonstats:
 							self.process_all.remove(proc)
 						except Exception:
 							pass
-				except ps.error.NoSuchProcess:
+				except Exception:
 					try:
 						self.process_all.remove(proc)
 					except Exception:
@@ -205,7 +208,7 @@ class sysmonstats:
 				else:
 					try:
 						self.processcount[str(proc.status)]+=1
-					except ps.error.NosuchProcess:
+					except Exception:
 						pass
 					except KeyError:
 						self.processcount[str(proc.status)]=1

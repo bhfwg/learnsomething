@@ -10,7 +10,7 @@ class sysmondisplay:
                 #global ps_cpu_percent_tag
 
 		self.network_tag = myglobal.get_ps_network_io_tag()
-		self.diskio_tag = pmyglobal.get_ps_disk_io_tag()
+		self.diskio_tag = myglobal.get_ps_disk_io_tag()
 		self.fs_tag = myglobal.get_ps_fs_usage_tag()
                 self.cpu_tag = myglobal.get_ps_cpu_percent_tag()
 
@@ -69,40 +69,39 @@ class sysmondisplay:
 		self.hascolors = False
 		if curses.has_colors() and curses.COLOR_PAIRS >8:
 			self.hascolors = True
-			curse.init_pair(1,curses.COLOR_WHITE, -1)
-			curse.init_pair(2,curses.COLOR_WHITE, curses.COLOR_RED) 
-			curse.init_pair(3,curses.COLOR_WHITE, curses.COLOR_GREEN) 
-			curse.init_pair(4,curses.COLOR_WHITE, curses.COLOR_BLUE)
-			curse.init_pair(5,curses.COLOR_WHITE, curses.COLOR_MAGENTA)
-			curse.init_pair(6,curses.COLOR_RED, -1)
-			curse.init_pair(7,curses.COLOR_GREEN, -1)
-			curse.init_pair(8,curses.COLOR_BLUE, -1)
-			curse.init_pair(9,curses.COLOR_MAGENTA, -1)
-
+			curses.init_pair(1,curses.COLOR_WHITE, -1)
+			curses.init_pair(2,curses.COLOR_WHITE, curses.COLOR_RED) 
+			curses.init_pair(3,curses.COLOR_WHITE, curses.COLOR_GREEN) 
+			curses.init_pair(4,curses.COLOR_WHITE, curses.COLOR_BLUE)
+			curses.init_pair(5,curses.COLOR_WHITE, curses.COLOR_MAGENTA)
+			curses.init_pair(6,curses.COLOR_RED, -1)
+			curses.init_pair(7,curses.COLOR_GREEN, -1)
+			curses.init_pair(8,curses.COLOR_BLUE, -1)
+			curses.init_pair(9,curses.COLOR_MAGENTA, -1)
 		else:
 			self.hascolors = Faslse
 		self.title_color = curses.A_BOLD | curses.A_UNDERLINE
 		self.help_color = curses.A_BOLD
-		if self.hasscolors:
+		if self.hascolors:
 			self.no_color = curses.color_pair(1)
 			self.default_color = curses.color_pair(3) | curses.A_BOLD
 			self.ifCAREFUL_color =  curses.color_pair(4) | curses.A_BOLD
  			self.ifWARNING_color = curses.color_pair(5) | curses.A_BOLD
-			slef.ifCRITICAL_color =  curses.color_pair(2) | curses.A_BOLD
+			self.ifCRITICAL_color =  curses.color_pair(2) | curses.A_BOLD
 			self.default_color2 =  curses.color_pair(7) | curses.A_BOLD
 			self.ifCAREFUL_color2 =  curses.color_pair(8) | curses.A_BOLD
  			self.ifWARNING_color2 = curses.color_pair(9) | curses.A_BOLD
-			slef.ifCRITICAL_color2 =  curses.color_pair(6) | curses.A_BOLD
+			self.ifCRITICAL_color2 =  curses.color_pair(6) | curses.A_BOLD
 		else:
 			self.no_color = curses.A_NORMAL
 			self.default_color = curses.A_NORMAL
 			self.ifCAREFUL_color =   curses.A_UNDERLINE
  			self.ifWARNING_color =  curses.A_BOLD
-			slef.ifCRITICAL_color =  curses.A_REVERSE
+			self.ifCRITICAL_color =  curses.A_REVERSE
 			self.default_color2 =   curses.A_NORMAL
 			self.ifCAREFUL_color2 =  curses.A_UNDERLINE
  			self.ifWARNING_color2 =  curses.A_BOLD
-			slef.ifCRITICAL_color2 =   curses.A_REVERSE
+			self.ifCRITICAL_color2 =   curses.A_REVERSE
 			
 		self.__colors_list = {
 			'DEFAULT':self.no_color,
