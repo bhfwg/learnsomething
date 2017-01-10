@@ -92,43 +92,50 @@ class sysmonstats:
 				except Exception:
 					pass
 			
-				percent = 100/(self.cputime_total_new - self.cputtime_total_old)
-				self.cpu = {'kernel':(self.cputime_new.system - self.cputime_old.systime) * percent, 'user':(self.cputime_new.user - self.cputime_old.user) * percent, 'idle':(self.cputime_new.idle - self.cputime_old.idle)*percent, 'nice':(self.cputime_new.nice-self.cputime_old.nice)*percent}
+				percent = 100/(self.cputime_total_new - self.cputime_total_old)
+				self.cpu = {'kernel':(self.cputime_new.system - self.cputime_old.system) * percent, 'user':(self.cputime_new.user - self.cputime_old.user) * percent, 'idle':(self.cputime_new.idle - self.cputime_old.idle)*percent, 'nice':(self.cputime_new.nice-self.cputime_old.nice)*percent}
 				self.cputime_old = self.cputime_new
 				self.cputime_total_old = self.cputime_total_new
-			except Exception:
+			except Exception, e:
 				self.cpu ={}	
+                                print(e)
 
 		#Load
 		try:
-			getload = os.getloadvag()
+			getload = os.getloadavg()
 			self.load={'min1':getload[0],'min5':getload[1],'min15':getload[2]}
-		except Exception:
+		except Exception, e:
 			self.load={}
+                        print(e)
 
 		#Mem only for linux
                 try:
                     mem = ps.virtual_memory()
-                    self.mem={'cache':mem.cached, 'total':mem.total, 'used':mem.used, 'free':mem.free,'percent':mem.percent}
-                except Exception:
+                    self.mem={'cache':mem.cached, 'total':mem.total, 'used':mem.used, 'free':mem.free, 'percent':mem.percent}
+                except Exception, e:
                     self.mem={}
+                    print(e)
+
                 try:
                     swapmem = ps.swap_memory()
                     self.memswap={'total':swapmem.total, 'used':swapmem.used, 'free':swapmem.free, 'percent':swapmem.percent}
-                except Exception:
+                except Exception, e:
                     self.memswap = {}
+                    print(e)
+
 		#Net
 		if myglobal.get_ps_network_io_tag():
 			self.network = []
 			try:
 				self.network_old
-			except Exception:
+			except Exception, e:
 				if myglobal.get_ps_network_io_tag():
 					self.network_old = ps.net_io_counters(True)
 			else:
 				try:
                                     self.network_new = ps.net_io_counters(True)
-				except Exception:
+				except Exception, e:
+                                    print(e)
 				    pass
 				else:
 				    for net in self.network_new:
@@ -137,12 +144,13 @@ class sysmonstats:
 					    netstat['interface_name'] = net
 					    netstat['rx']=(self.network_new[net].bytes_recv - self.network_old[net].bytes_recv)
 					    netstat['tx']=(self.network_new[net].bytes_sent - self.network_old[net].bytes_sent)
-					except Exception:
+					except Exception, e:
+                                            print(e)
 					    continue
 					else:
 					    self.network.append(netstat)
 				    self.network_old = self.network_new
-		
+
 		#disk io
 		if myglobal.get_ps_disk_io_tag():
 			self.diskio=[]
@@ -154,7 +162,8 @@ class sysmonstats:
 			else:
 			    try:
 				self.diskio_new =  ps.disk_io_counters(True) 
-			    except Exception:
+			    except Exceptioni, e:
+                                print(e)
 				pass
 			    else:
 				for disk in self.diskio_new:
@@ -162,8 +171,9 @@ class sysmonstats:
 					diskstat = {}
 					diskstat['disk_name'] = disk
 					diskstat['read_bytes'] = (self.diskio_new[disk].read_bytes - self.diskio_old[disk].read_bytes)
-				        diskstat['write_bytes'] = (sellf.disk_new[disk].write_bytes - self.disk_old[disk].write_bytes)
-				    except Exception:
+				        diskstat['write_bytes'] = (self.diskio_new[disk].write_bytes - self.diskio_old[disk].write_bytes)
+				    except Exception, e:
+                                        print(e)
 					continue
 				    else:
 					self.diskio.append(diskstat)
@@ -178,62 +188,65 @@ class sysmonstats:
 
 		#process
 		if self.process_list_refresh:
-			self.process_first_grab = False
+                    self.process_first_grab = False
+		    try:
+		        self.process_all
+		    except Exception:
+			self.process_all = [proc for proc in ps.process_iter()]
+			self.process_first_grab = True
+		    
+                    self.process = []
+		    self.processcount = {'total':0, 'running':0, 'sleeping':0}
+		    process_new =  [proc.pid for proc in self.process_all]
+		    for proc in ps.process_iter():
+                        if proc.pid not in process_new:
+			    self.process_all.append(proc)
+		    for proc in self.process_all[:]:
 			try:
-				self.process_all
-			except Exception:
-				self.process_all = [proc for proc in ps.process_iter()]
-				self.process_first_grab = True
-			self.process = []
-			self.processcount = {'total':0, 'running':0, 'sleeping':0}
-			process_new =  [proc.pid for proc in self.process_all]
-			for proc in ps.process_iter():
-				if proc.pid not in process_new:
-					self.process_all.append(proc)
-			for proc in self.process_all[:]:
+			    if not proc.is_running():
 				try:
-					if not proc.is_running():
-						try:
-							self.process_all.remove(proc)
-						except Exception:
-							pass
-				except Exception:
-					try:
-						self.process_all.remove(proc)
-					except Exception:
-						pass
-				else:
-					try:
-						self.processcount[str(proc.status())]+=1
-					except Exception:
-						pass
-					except KeyError:
-						self.processcount[str(proc.status())]=1
-					finally:
-						self.processcount['total']+=1
-					try:
-						procstate = {}
-						procstate['proc_size'] = proc.memory_info().vms
-						procstate['proc_resident'] = proc.memory_info().rss
-						if myglobal.get_ps_cpu_percent_tag():
-							procstate['cpu_percent'] =  proc.cpu_percent(interval=0)
-						procstate['mem_percent'] = proc.memory_percent()
-						procstate['pid']=proc.pid
-						procstate['uid'] = proc.username()
-						try:
-							procstate['nice'] = proc.nice
-						except Exception:
-							procstate['nice']=proc.get_nice()
-						procstate['status'] = str(proc.status())[:1].upper()
-						procstate['proc_time'] = proc.get_cpu_times()
-						procstate['proc_cmdline']=' '.join(proc.cmdline)
-						self.process.append(procstat)
-					except Exception:
-						pass
+				    self.process_all.remove(proc)
+				except Exception,e:
+                                    print(e)
+				    pass
+			except Exception:
+			    try:
+				self.process_all.remove(proc)
+			    except Exception, e:
+                                print(e)
+				pass
+			else:
+			    try:
+			        self.processcount[str(proc.status())]+=1
+			    except Exception, e:
+                                print(e)
+				pass
+			    except KeyError, e:
+                                print(e)
+				self.processcount[str(proc.status())]=1
+			    finally:
+				self.processcount['total']+=1
+			    
+                            try:
+				procstate = {}
+				procstate['proc_size'] = proc.memory_info().vms
+				procstate['proc_resident'] = proc.memory_info().rss
+				if myglobal.get_ps_cpu_percent_tag():
+				    procstate['cpu_percent'] =  proc.cpu_percent(interval=0)
+			        procstate['mem_percent'] = proc.memory_percent()
+			        procstate['pid']=proc.pid
+				procstate['uid'] = proc.username()
+			        procstate['nice'] = proc.nice()
+                                procstate['status'] = str(proc.status())[:1].upper()
+				procstate['proc_time'] = proc.cpu_times()
+				procstate['proc_cmdline']=' '.join(proc.cmdline())
+				self.process.append(procstate)
+			    except Exception,e:
+                                print(e)
+				pass
 
-
-			if self.process_first_grab:
-				self.process = []
+		    if self.process_first_grab:
+			self.process = []
 
 		self.process_list_refresh = not self.process_list_refresh
 
@@ -248,7 +261,7 @@ class sysmonstats:
 	def getHost(self):
 		return self.host
 
-	def getSystem(self):
+        def getSystem(self):
 		return self.host
 
 	def getCpu(self):
@@ -280,7 +293,7 @@ class sysmonstats:
 
 	def getFs(self):
 		if myglobal.get_ps_fs_usage_tag():
-			return sorted(seld.fs, key=lambda fs: fs['mnt_point'])
+			return sorted(self.fs, key=lambda fs: fs['mnt_point'])
 		else:
 			return 0
 
@@ -311,23 +324,41 @@ class sysmonstats:
 		return self.now
 
 if __name__ == "__main__":
+    myglobal.set_ps_network_io_tag(True)
+    myglobal.set_ps_disk_io_tag(True)
+    myglobal.set_ps_fs_usage_tag(True)
+    myglobal.set_ps_mem_usage_tag(True)
+    myglobal.set_ps_cpu_percent_tag(True)
     stats = sysmonstats()
+    i = 0
     while(True):
         stats.update()
 
         pprint.pprint(stats.getNow())
+        print("Host:")
         pprint.pprint(stats.getHost())
+        print("Cpu:")
         pprint.pprint(stats.getCpu())
+        print("Core:")
         pprint.pprint(stats.getCore())
+        print("Load:")
         pprint.pprint(stats.getLoad())
+        print("Mem:")
         pprint.pprint(stats.getMem())
+        print("Swap:")
         pprint.pprint(stats.getMemSwap())
+        print("Network:")
         pprint.pprint(stats.getNetwork())
+        print("DiskIo:")
         pprint.pprint(stats.getDiskIo())
+        print("Fs:")
         pprint.pprint(stats.getFs())
+        print("ProcessCount:")
         pprint.pprint(stats.getProcessCount())
+        print("processList:")
         pprint.pprint(stats.getProcessList())
-        print("................................................")
-        print("................................................")
-        print("................................................")
-        time.sleep(3)
+        print("%d................................................" %(i))
+        print
+        print
+        i=i+1
+        time.sleep(5)
