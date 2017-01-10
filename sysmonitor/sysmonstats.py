@@ -5,6 +5,7 @@ from sysmongrabfs import sysmongrabfs
 from sysmonlimits import sysmonlimits
 import psutil as ps
 import myglobal
+import time
 class sysmonstats:
 	'''this class store, update and give stats
 	'''
@@ -17,8 +18,8 @@ class sysmonstats:
 	
 	def __update__(self):
 		self.host ={}
-		self.host['os_name'] = platform.system()
-		self.host['hostname'] = platform.node()
+		self.host['os_name'] = platform.system().lower()
+		self.host['hostname'] = platform.node().lower()
 		self.host['platform'] = platform.architecture()[0]
 		is_archlinux = os.path.exists(os.path.join('/','etc','arch-release'))
 		
@@ -28,15 +29,15 @@ class sysmonstats:
 					self.host['linux_distro'] = 'Arch Linux'
 				else:
 					linux_distro = platform.linux_distribution()
-					self.host['linux_distro'] = ' '.join(linux_distro[:2])
-				self.host['os_version'] = platform.release()
+					self.host['linux_distro'] = (' '.join(linux_distro[:2])).lower()
+				self.host['os_version'] = platform.release().lower()
 			elif self.host['os_name'] == 'FreeBSD':
-				self.host['os_version'] = platform.release()
+				self.host['os_version'] = platform.release().lower()
 			elif self.host['os_name'] == 'Darwin':
-				self.host['os_version'] = platform.mac_ver()[0]
+				self.host['os_version'] = (platform.mac_ver()[0]).lower()
 			elif self.host['os_version'] == ' Windows':
 				os_version = platform.win32_ver()
-				self.host['os_version'] = ' '.join(os_version[::2])
+				self.host['os_version'] = (' '.join(os_version[::2])).lower()
 			else:
 				self.host['os_version'] = ''
 		except Exception:
@@ -122,7 +123,7 @@ class sysmonstats:
 
 		#Net
 		if myglobal.get_ps_network_io_tag():
-			slef.network = []
+			self.network = []
 			try:
 				self.network_old
 			except Exception:
@@ -242,7 +243,7 @@ class sysmonstats:
 
 		# get datetime
 		self.now = datetime.now()
-		self.core_number = ps.NUM_CPUS
+		self.core_number = ps.cpu_count()
 
 
 	def update(self):
@@ -269,7 +270,7 @@ class sysmonstats:
 	def getMemSwap(self):
 		return self.memswap
 
-	def getNetWork(self):
+	def getNetwork(self):
 		if myglobal.get_ps_network_io_tag():
 			return sorted(self.network,key=lambda network: network['interface_name'])
 		else:
@@ -315,4 +316,7 @@ class sysmonstats:
 		return self.now
 
 if __name__ == "__main__":
-	main()
+    stats = sysmonstats()
+    while(True):
+        stats.update()
+        time.sleep(3)
