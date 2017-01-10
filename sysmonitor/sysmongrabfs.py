@@ -1,4 +1,6 @@
 import psutil as ps
+import time
+import pprint
 class sysmongrabfs:
 	''' get fs state'''
 
@@ -9,7 +11,7 @@ class sysmongrabfs:
 	def __update__(self):
 		self.fs_list = []
 		fs_state = ps.disk_partitions(True)
-		for fs in xrange(len(fs_stat)):
+		for fs in xrange(len(fs_state)):
 			fs_current = {}
 			fs_current['device_name'] = fs_state[fs].device
 			if fs_current['device_name'] in self.ignore_fsname:
@@ -24,7 +26,7 @@ class sysmongrabfs:
 				continue
 			fs_current['size'] = fs_usage.total
 			fs_current['used'] = fs_usage.used
-			fs_currrnt['avail'] = fs_usage.free
+			fs_current['avail'] = fs_usage.free
 
 			self.fs_list.append(fs_current)
 	
@@ -33,4 +35,10 @@ class sysmongrabfs:
 		return self.fs_list
 
 if __name__ == '__main__':
-	pass
+    while(True):
+        gfs = sysmongrabfs()
+        pprint.pprint(gfs.get())
+        print("................................................")
+        print("................................................")
+        print("................................................")
+        time.sleep(3)
