@@ -35,7 +35,7 @@ class sysmonlogs:
 		if item_index < 0:
 			if (item_state == 'WARNING' or item_state == 'CRITICAL'):
 				item = []
-				item.append(time.mktime(datetime.now().timtuple()))
+				item.append(time.mktime(datetime.now().timetuple()))
 				item.append(-1)
 				item.append(item_state)
 				item.append(item_type)
@@ -60,11 +60,26 @@ class sysmonlogs:
 
 				self.logs_list[item_index][7] += item_value
 				self.logs_list[item_index][8] += 1
-				self.logs_list[item_index][5] = (
-					self.logs_list[item_index][7]/self.logs_list[item_index][8])
+				self.logs_list[item_index][5] = (self.logs_list[item_index][7]/self.logs_list[item_index][8])
 
 
 		return self.len()
 
 if __name__ == '__main__':
-	pass
+	log = sysmonlogs()
+        states =['OK','CAREFUL','WARNING','CRITICAL']
+        types =['CPU','LOAD','MEM']
+        import random
+        import time
+        import pprint
+        while(True):
+            i = random.randint(0,3)
+            j = random.randint(0,2)            
+            lgstate = states[i]
+            lgtype =  types[j]
+            lgvalue = random.randint(1,100)
+            print 'state=%s type=%s value=%d' %(lgstate, lgtype, lgvalue)
+            log.add(lgstate,lgtype,lgvalue)
+            pprint.pprint(log.logs_list)
+            time.sleep(5)
+

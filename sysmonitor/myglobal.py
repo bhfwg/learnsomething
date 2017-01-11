@@ -32,3 +32,23 @@ def get_ps_network_io_tag():
 def set_ps_network_io_tag(v):
     global ps_network_io_tag
     ps_network_io_tag = v
+
+if __name__ == "__main__" :
+    print("before:")
+    print(get_ps_network_io_tag())
+    print(get_ps_disk_io_tag())
+    print(get_ps_fs_usage_tag())
+    print(get_ps_mem_usage_tag())
+    print(get_ps_mem_usage_tag())
+    print("after:")
+    set_ps_network_io_tag(True)
+    print(get_ps_network_io_tag())
+    set_ps_disk_io_tag(True)
+    print(get_ps_disk_io_tag())
+    set_ps_fs_usage_tag(True)
+    print(get_ps_fs_usage_tag())
+    set_ps_mem_usage_tag(True)
+    print(get_ps_mem_usage_tag())
+    set_ps_cpu_percent_tag(True)
+    print(get_ps_cpu_percent_tag())
+

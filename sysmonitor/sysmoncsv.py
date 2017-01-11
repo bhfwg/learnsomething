@@ -1,8 +1,9 @@
 import csv
 import sys
+import time
 class sysmoncsv:
 	'''record the log data'''
-	def __init__(self, csvfile='./sysmon.csv', refresh_time=1):
+	def __init__(self, csvfile='./log.csv', refresh_time=1):
 		self.__refresh_time = refresh_time
 		try:
 			self.__csvfile_fd = open("%s" % csvfile, 'wb')
@@ -25,4 +26,16 @@ class sysmoncsv:
 		self.__csvfile_fd.flush()
 
 if __name__ == '__main__':
-	pass
+    import myglobal
+    myglobal.set_ps_network_io_tag(True)
+    myglobal.set_ps_disk_io_tag(True)
+    myglobal.set_ps_fs_usage_tag(True)
+    myglobal.set_ps_mem_usage_tag(True)
+    myglobal.set_ps_cpu_percent_tag(True)
+    mycsv = sysmoncsv()
+    from sysmonstats import sysmonstats
+    stats = sysmonstats()
+    while(True):
+        stats.update()
+        time.sleep(5)
+        mycsv.update(stats)
