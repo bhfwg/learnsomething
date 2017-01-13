@@ -2,6 +2,8 @@ import curses
 from sysmonstats import sysmonstats
 from sysmontimer import sysmontimer
 import myglobal
+import gettext
+import sys
 class sysmondisplay:
 	def __init__(self, refresh_time =1):
 		#global ps_network_io_tag
@@ -80,8 +82,10 @@ class sysmondisplay:
 			curses.init_pair(9,curses.COLOR_MAGENTA, -1)
 		else:
 			self.hascolors = Faslse
+
 		self.title_color = curses.A_BOLD | curses.A_UNDERLINE
 		self.help_color = curses.A_BOLD
+
 		if self.hascolors:
 			self.no_color = curses.color_pair(1)
 			self.default_color = curses.color_pair(3) | curses.A_BOLD
@@ -126,6 +130,7 @@ class sysmondisplay:
 		self.term_window.keypad(1)
 		self.term_window.nodelay(1)
 		self.pressedkey = -1
+                self.isrunning = 1
 
 	def setProcessSortedBy(self,sorted):
 		self.__process_sortedautoflag = False
@@ -211,46 +216,47 @@ class sysmondisplay:
 
 	def __catchKey(self):
 		self.pressedkey = self.term_window.getch()
-		if (self.presskey == 27 or self.presskey == 113):
-			end() #ESC or q
-		elif self.presskey== 97:
+		if (self.pressedkey == 27 or self.pressedkey == 113):
+                        self.isrunning = 0
+			self.end() #ESC or q
+		elif self.pressedkey== 97:
 			self.setProcessSortedBy('auto') #a
-		elif self.presskey == 99 and cpu_tag:
+		elif self.pressedkey == 99 and cpu_tag:
 			self.setProcessSortedBy('cpu_percent') #c
-		elif self.presskey == 100 and disk_tag: 
+		elif self.pressedkey == 100 and disk_tag: 
 			self.diskio_tag = not self.diskio_tag  #d
-		elif self.presskey == 102 or fs_tag:
+		elif self.pressedkey == 102 or self.fs_tag:
 			self.fs_tag = not self.fs_tag #f
-		elif self.presskey == 104:
+		elif self.pressedkey == 104:
 			self.help_tag = not self.help_tag #h
 		elif self.pressedkey == 108:
 			self.log_tag = not self.log_tag #l
-		elif self.presskey == 109:
+		elif self.pressedkey == 109:
 			self.setProcessSortedBy('mem_percent') #m
-		elif (self.presskey == 110 or network_tag):
+		elif (self.pressedkey == 110 or self.network_tag):
 			self.network_tag = not self.network_tag #n
 		elif self.pressedkey == 112:
 			self.setProcessSortedB('proc_name')
 
-
 		return self.pressedkey
+
 	def end(self):
 		curses.echo()
 		curses.nocbreak()
 		curses.curs_set(1)
 		curses.endwin()
-	
+
 	def display(self,stats):
-		self.displaySystem(stats.getHost(), stats.getSystem())
+		self.displaySystem(stats.getHost())
 		self.displayCpu(stats.getCpu())
 		self.displayLoad(stats.getLoad(), stats.getCore())
 		self.displayMem(stats.getMem(), stats.getMemSwap())
-		network_count = self.displayNetwork(stats.getNetwork())
-		diskio_count = self.displayDiskIO(stats.getDiskIo(), self.network_y + network_count)
-		fs_count = self.displayFs(stats.getFs(), self.network_y+ network_count + diskio_count)
-		log_count = self.displayLog(self.network_y + network_count + diskio_count + fs_count)
-		self.displayProcess(stats.getProcessCount(), stats.getProcessList(screen.getProcessSortedBlog_count), log_count)
-		self.displayCation()
+		#network_count = self.displayNetwork(stats.getNetwork())
+		#diskio_count = self.displayDiskIO(stats.getDiskIo(), self.network_y + network_count)
+		#fs_count = self.displayFs(stats.getFs(), self.network_y+ network_count + diskio_count)
+		#log_count = self.displayLog(self.network_y + network_count + diskio_count + fs_count)
+		#self.displayProcess(stats.getProcessCount(), stats.getProcessList(screen.getProcessSortedBlog_count), log_count)
+		self.displayCaption()
 		self.displayNow(stats.getNow())
 		self.displayHelp()
 
@@ -267,23 +273,22 @@ class sysmondisplay:
 		while (not countdown.finished()):
 			if self.__catchKey() > -1 :
 				self.flush(stats)
-			curses.napm(100)
+			curses.napms(100)
 
-	def displaySystem(self, host, system):
-		if not host or not system:
+	def displaySystem(self, host):
+		if not host :
 			return 0
 		screen_x = self.screen.getmaxyx()[1]
 		screen_y = self.screen.getmaxyx()[0]
 		if (screen_y > self.system_y and screen_x > self.system_x + 79):
-			if host['os_name'] == "Linux":
-				system_msg = _("{0} {1} with {2} {3} on {4}").format(system['linux_distro'], system['platform'], system['os_name'], system['os_version'],host['hostname'])
+			if host['os_name'] == "linux":
+				system_msg = ("{0} {1} with {2} {3} on {4}").format(host['linux_distro'], host['platform'], host['os_name'], host['os_version'],host['hostname'])
 			else:
-				system_msg = _("{0} {1} {2} on {3}").format(system['os_name'], system['os_version'],system['platform'], host['hostname'])
+				system_msg = ("{0} {1} {2} on {3}").format(host['os_name'], host['os_version'],host['platform'], host['hostname'])
 			self.term_window.addnstr(self.system_y, self.system_x +int(screen_x / 2) - len(system_msg) / 2, system_msg, 80, curses.A_UNDERLINE)
 
 	def displayCpu(self, cpu):
 		pass
-
 
 	def displayLoad(self, load, core):
 		pass
@@ -318,4 +323,19 @@ class sysmondisplay:
 
 
 if __name__ == "__main__":
-	main()
+    myglobal.set_ps_network_io_tag(True)
+    myglobal.set_ps_disk_io_tag(True)
+    myglobal.set_ps_fs_usage_tag(True)
+    myglobal.set_ps_mem_usage_tag(True)
+    myglobal.set_ps_cpu_percent_tag(True)
+    status = sysmonstats()
+    refreshtime = 1
+    i=0
+    screen = sysmondisplay(refreshtime)
+    while True:
+        status.update()
+        screen.update(status)
+        if screen.isrunning == 0:
+            sys.exit(0)
+        else:
+            print "running....."
