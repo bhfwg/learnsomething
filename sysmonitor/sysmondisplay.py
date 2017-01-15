@@ -4,7 +4,7 @@ from sysmontimer import sysmontimer
 from sysmonlimits import sysmonlimits
 from sysmonlogs import sysmonlogs
 import myglobal
-import gettext
+import traceback
 import sys
 class sysmondisplay:
 	def __init__(self, refresh_time =1):
@@ -179,10 +179,10 @@ class sysmondisplay:
 			return 'CAREFUL'
 		return 'OK'
 
-	def __getColor(self,cureent=0,max=100):
+	def __getColor(self,current=0,max=100):
 		return self.__colors_list[self.__getAlert(current,max)]
 	
-	def __getColor2(self,cureent=0,max=100):
+	def __getColor2(self,current=0,max=100):
 		return self.__colors_list2[self.__getAlert(current,max)]
 
 	def __getCpuAlert(self, current=0, max=100):
@@ -224,23 +224,23 @@ class sysmondisplay:
                         self.isrunning = 0
 			self.end() #ESC or q
 		elif self.pressedkey== 97:
-			self.setProcessSortedBy('auto') #a
-		elif self.pressedkey == 99 and self.cpu_tag:
-			self.setProcessSortedBy('cpu_percent') #c
-		elif self.pressedkey == 100 and self.diskio_tag: 
-			self.diskio_tag = not self.diskio_tag  #d
-		elif self.pressedkey == 102 or self.fs_tag:
-			self.fs_tag = not self.fs_tag #f
+			self.setProcessSortedBy('auto') #a sort process auto
+		elif self.pressedkey == 99 and myglobal.get_ps_cpu_percent_tag():
+			self.setProcessSortedBy('cpu_percent') #c sort process by cpu_percent
+		elif self.pressedkey == 100 and myglobal.get_ps_disk_io_tag(): 
+			self.diskio_tag = not self.diskio_tag  #d show/hide diskio stat
+		elif self.pressedkey == 102 and myglobal.get_ps_fs_usage_tag():
+			self.fs_tag = not self.fs_tag #f show/hide fs usage
 		elif self.pressedkey == 104:
-			self.help_tag = not self.help_tag #h
+			self.help_tag = not self.help_tag #h show/hide help
 		elif self.pressedkey == 108:
-			self.log_tag = not self.log_tag #l
+			self.log_tag = not self.log_tag #l show/hide log message
 		elif self.pressedkey == 109:
-			self.setProcessSortedBy('mem_percent') #m
-		elif (self.pressedkey == 110 or self.network_tag):
-			self.network_tag = not self.network_tag #n
+			self.setProcessSortedBy('mem_percent') #m sort process by Mem usage
+		elif self.pressedkey == 110 and myglobal.get_ps_network_io_tag():
+			self.network_tag = not self.network_tag #n show/hide network state
 		elif self.pressedkey == 112:
-			self.setProcessSortedB('proc_name')
+			self.setProcessSortedB('proc_name')#p sort process by name
 
 		return self.pressedkey
 
@@ -251,18 +251,21 @@ class sysmondisplay:
 		curses.endwin()
 
 	def display(self,stats):
-		self.displaySystem(stats.getHost())
+            try:
+	        self.displaySystem(stats.getHost())
 		self.displayCpu(stats.getCpu())
 		self.displayLoad(stats.getLoad(), stats.getCore())
-		self.displayMem(stats.getMem(), stats.getMemSwap())
-		network_count = self.displayNetwork(stats.getNetwork())
-		#diskio_count = self.displayDiskIO(stats.getDiskIo(), self.network_y + network_count)
-		#fs_count = self.displayFs(stats.getFs(), self.network_y+ network_count + diskio_count)
+	        self.displayMem(stats.getMem(), stats.getMemSwap())
+                network_count = self.displayNetwork(stats.getNetwork())
+		diskio_count = self.displayDiskIO(stats.getDiskIo(), self.network_y + network_count)
+		fs_count = self.displayFs(stats.getFs(), self.network_y+ network_count + diskio_count)
 		#log_count = self.displayLog(self.network_y + network_count + diskio_count + fs_count)
 		#self.displayProcess(stats.getProcessCount(), stats.getProcessList(screen.getProcessSortedBlog_count), log_count)
 		self.displayCaption()
 		self.displayNow(stats.getNow())
 		self.displayHelp()
+            except Exception as e:
+                traceback.print_exc()
 
 	def erase(self):
 		self.term_window.erase()
@@ -321,7 +324,6 @@ class sysmondisplay:
 	def displayLoad(self, load, core):
                 if not load:
                     return 0
-
 		screen_x = self.screen.getmaxyx()[1]
                 screen_y = self.screen.getmaxyx()[0]
                 if(screen_y > self.cpu_y + 5 and screen_x > self.cpu_x + 18):
@@ -344,10 +346,8 @@ class sysmondisplay:
 
 	
 	def displayMem(self, mem, memswap):
-		
                 if not mem or not memswap:
                     return 0
-
 		screen_x = self.screen.getmaxyx()[1]
                 screen_y = self.screen.getmaxyx()[0]
                 if(screen_y > self.cpu_y + 5 and screen_x > self.cpu_x + 38):
@@ -387,39 +387,70 @@ class sysmondisplay:
 	def displayNetwork(self, network):
                 if not self.network_tag: 
                     return 0
-                else:
-                    print 'network_tag is true'
-
 		screen_x = self.screen.getmaxyx()[1]
                 screen_y = self.screen.getmaxyx()[0]
-                if(screen_y > self.network_y + 3 and screen_x > self.network_x + 28):
+                if(screen_y > (self.network_y + 3) and screen_x > (self.network_x + 28)):
                     self.term_window.addnstr(self.network_y, self.network_x, "Network", 8, self.title_color if  self.hascolors else curses.A_UNDERLINE)
                     self.term_window.addnstr(self.network_y, self.network_x+10,  ("Rx/ps"), 8)
                     self.term_window.addnstr(self.network_y, self.network_x+19, ("Tx/ps") , 8)
                     if not network:
                         self.term_window.addnstr(self.network_y+1, self.network_x, ("compute data") , 15)
                         return 3
-                    else:
-                        print 'network can be cal'
                     
                     ret =2
                     net_num = min(screen_y - self.network_y-3, len(network))
-                    for i in xrange(0,net_num):
+                    for ii in xrange(0,net_num):
                         elapsed_time = max(1, self.__refresh_time)
-                        self.term_window.addnstr(self.network_y+1+i, self.network_x, network[i]['interface_name']+':', 8)
-                        self.term_window.addnstr(self.network_y+1+i, self.network_x+10, self.__autoUnit(network[i]['rx'] / elapsed_time * 8)+'b', 8)
-                        self.term_window.addnstr(self.network_y+1+i, self.network_x+19, self.__autoUnit(network[i]['tx'] / elapsed_time * 8)+'b', 8)
+                        self.term_window.addnstr(self.network_y+1+ii, self.network_x, network[ii]['interface_name']+':', 8)
+                        self.term_window.addnstr(self.network_y+1+ii, self.network_x+10, self.__autoUnit(network[ii]['rx'] / elapsed_time * 8)+'b', 8)
+                        self.term_window.addnstr(self.network_y+1+ii, self.network_x+19, self.__autoUnit(network[ii]['tx'] / elapsed_time * 8)+'b', 8)
                         ret = ret + 1
                     return ret
-                else:
-                    print '{0} {1} {2} {3}'.format(screen_y, self.network_y+3, screen_x, self.network_x+28)
                 return 0
 
 	def displayDiskIO(self, diskio, offset_y=0):
-		pass
+                if not self.diskio_tag: 
+                    return 0
+		screen_x = self.screen.getmaxyx()[1]
+                screen_y = self.screen.getmaxyx()[0]
+                self.diskio_y = offset_y
+                if(screen_y > (self.diskio_y + 3) and screen_x > (self.diskio_x + 28)):
+                    self.term_window.addnstr(self.diskio_y, self.diskio_x, "Disk I/O", 8, self.title_color if  self.hascolors else curses.A_UNDERLINE)
+                    self.term_window.addnstr(self.diskio_y, self.diskio_x+10,  ("In/ps"), 8)
+                    self.term_window.addnstr(self.diskio_y, self.diskio_x+19, ("Out/ps") , 8)
+                    if not diskio:
+                        self.term_window.addnstr(self.diskio_y+1, self.diskio_x, ("compute data") , 15)
+                        return 3
+                    
+                    disk = 0
+                    disk_num = min(screen_y - self.diskio_y-3, len(diskio))
+                    for disk in xrange(0,disk_num):
+                        elapsed_time = max(1, self.__refresh_time)
+                        self.term_window.addnstr(self.diskio_y+1+disk, self.diskio_x, diskio[disk]['disk_name']+':', len(diskio[disk]['disk_name'])+1)
+                        self.term_window.addnstr(self.diskio_y+1+disk, self.diskio_x+10, self.__autoUnit(diskio[disk]['write_bytes'] / elapsed_time )+'B', 8)
+                        self.term_window.addnstr(self.diskio_y+1+disk, self.diskio_x+19, self.__autoUnit(diskio[disk]['read_bytes'] / elapsed_time )+'B', 8)
+                    return disk+3
+                return 0
 
 	def displayFs(self, fs, offset_y=0):
-		pass
+                if not fs or not self.fs_tag: 
+                    return 0
+		screen_x = self.screen.getmaxyx()[1]
+                screen_y = self.screen.getmaxyx()[0]
+                self.fs_y = offset_y
+                if(screen_y > (self.fs_y + 3) and screen_x > (self.fs_x + 28)):
+                    self.term_window.addnstr(self.fs_y, self.fs_x, "Mount", 8, self.title_color if  self.hascolors else curses.A_UNDERLINE)
+                    self.term_window.addnstr(self.fs_y, self.fs_x+10,  ("Total"), 8)
+                    self.term_window.addnstr(self.fs_y, self.fs_x+19, ("Used") , 8)
+                    
+                    mounted = 0
+                    fs_num = min(screen_y - self.fs_y-3, len(fs))
+                    for mounted in xrange(0,fs_num):
+                        self.term_window.addnstr(self.fs_y+1+mounted, self.fs_x, fs[mounted]['mnt_point'], len(fs[mounted]['mnt_point']))
+                        self.term_window.addnstr(self.fs_y+1+mounted, self.fs_x+10, self.__autoUnit(fs[mounted]['size']), 8)
+                        self.term_window.addnstr(self.fs_y+1+mounted, self.fs_x+19, self.__autoUnit(fs[mounted]['used']), 8,self.__getFsColor(fs[mounted]['used'], fs[mounted]['size']))
+                    return mounted+3
+                return 0
 
 	def displayLog(self, offset_y=0):
 		pass
@@ -456,7 +487,7 @@ if __name__ == "__main__":
     myglobal.set_ps_mem_usage_tag(True)
     myglobal.set_ps_cpu_percent_tag(True)
     status = sysmonstats()
-    refreshtime = 1
+    refreshtime = 2
     i=0
     screen = sysmondisplay(refreshtime)
     while True:
