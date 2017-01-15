@@ -98,7 +98,7 @@ class sysmonstats:
 				self.cputime_total_old = self.cputime_total_new
 			except Exception, e:
 				self.cpu ={}	
-                                print(e)
+                                #print(e)
 
 		#Load
 		try:
@@ -106,7 +106,7 @@ class sysmonstats:
 			self.load={'min1':getload[0],'min5':getload[1],'min15':getload[2]}
 		except Exception, e:
 			self.load={}
-                        print(e)
+                        #print(e)
 
 		#Mem only for linux
                 try:
@@ -114,14 +114,14 @@ class sysmonstats:
                     self.mem={'cache':mem.cached, 'total':mem.total, 'used':mem.used, 'free':mem.free, 'percent':mem.percent}
                 except Exception, e:
                     self.mem={}
-                    print(e)
+                    #print(e)
 
                 try:
                     swapmem = ps.swap_memory()
                     self.memswap={'total':swapmem.total, 'used':swapmem.used, 'free':swapmem.free, 'percent':swapmem.percent}
                 except Exception, e:
                     self.memswap = {}
-                    print(e)
+                    #print(e)
 
 		#Net
 		if myglobal.get_ps_network_io_tag():
@@ -135,7 +135,7 @@ class sysmonstats:
 				try:
                                     self.network_new = ps.net_io_counters(True)
 				except Exception, e:
-                                    print(e)
+                                    #print(e)
 				    pass
 				else:
 				    for net in self.network_new:
@@ -145,7 +145,7 @@ class sysmonstats:
 					    netstat['rx']=(self.network_new[net].bytes_recv - self.network_old[net].bytes_recv)
 					    netstat['tx']=(self.network_new[net].bytes_sent - self.network_old[net].bytes_sent)
 					except Exception, e:
-                                            print(e)
+                                            #print(e)
 					    continue
 					else:
 					    self.network.append(netstat)
@@ -163,7 +163,7 @@ class sysmonstats:
 			    try:
 				self.diskio_new =  ps.disk_io_counters(True) 
 			    except Exceptioni, e:
-                                print(e)
+                                #print(e)
 				pass
 			    else:
 				for disk in self.diskio_new:
@@ -173,7 +173,7 @@ class sysmonstats:
 					diskstat['read_bytes'] = (self.diskio_new[disk].read_bytes - self.diskio_old[disk].read_bytes)
 				        diskstat['write_bytes'] = (self.diskio_new[disk].write_bytes - self.diskio_old[disk].write_bytes)
 				    except Exception, e:
-                                        print(e)
+                                        #print(e)
 					continue
 				    else:
 					self.diskio.append(diskstat)
@@ -207,22 +207,22 @@ class sysmonstats:
 				try:
 				    self.process_all.remove(proc)
 				except Exception,e:
-                                    print(e)
+                                    #print(e)
 				    pass
 			except Exception:
 			    try:
 				self.process_all.remove(proc)
 			    except Exception, e:
-                                print(e)
+                                #print(e)
 				pass
 			else:
 			    try:
 			        self.processcount[str(proc.status())]+=1
 			    except Exception, e:
-                                print(e)
+                                #print(e)
 				pass
 			    except KeyError, e:
-                                print(e)
+                                #print(e)
 				self.processcount[str(proc.status())]=1
 			    finally:
 				self.processcount['total']+=1
@@ -242,7 +242,7 @@ class sysmonstats:
 				procstate['proc_cmdline']=' '.join(proc.cmdline())
 				self.process.append(procstate)
 			    except Exception,e:
-                                print(e)
+                                #print(e)
 				pass
 
 		    if self.process_first_grab:
@@ -356,7 +356,14 @@ if __name__ == "__main__":
         print("ProcessCount:")
         pprint.pprint(stats.getProcessCount())
         print("processList:")
-        pprint.pprint(stats.getProcessList())
+        pl = stats.getProcessList()
+        j = 0
+        for p in pl:
+            if  j<10:
+                pprint.pprint(p)
+                j=j+1
+            else:
+                break
         print("%d................................................" %(i))
         print
         print

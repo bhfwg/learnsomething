@@ -1,6 +1,8 @@
 import curses
 from sysmonstats import sysmonstats
 from sysmontimer import sysmontimer
+from sysmonlimits import sysmonlimits
+from sysmonlogs import sysmonlogs
 import myglobal
 import gettext
 import sys
@@ -15,6 +17,8 @@ class sysmondisplay:
 		self.diskio_tag = myglobal.get_ps_disk_io_tag()
 		self.fs_tag = myglobal.get_ps_fs_usage_tag()
                 self.cpu_tag = myglobal.get_ps_cpu_percent_tag()
+                self.limits = sysmonlimits()
+                self.logs = sysmonlogs()
 
 		self.term_w = 80
 		self.term_h = 24
@@ -64,7 +68,8 @@ class sysmondisplay:
 				pass
 		if hasattr(curses,'curs_set'):
 			try:
-				curses.curs_set(0)
+			    #curses.curs_set(0)
+                            pass
 			except Exception:
 				pass
 		
@@ -166,13 +171,12 @@ class sysmondisplay:
 			return 'DEFAULT'
 
 		variable = (current *100)/max
-		if variable > limits.getSTDCritical():
+		if variable > self.limits.getSTDCritical():
 			return 'CRITICAL'
-		elif variable > limits.getSTDWARNing():
+		elif variable > self.limits.getSTDWarning():
 			return 'WARNING'
-		elif variable > limits.getSTDCareful():
+		elif variable >self.limits.getSTDCareful():
 			return 'CAREFUL'
-
 		return 'OK'
 
 	def __getColor(self,cureent=0,max=100):
@@ -188,11 +192,11 @@ class sysmondisplay:
 		return self.__getColor(current, max)
 
 	def __getLoadAlert(self, current=0, core=1):
-		if current > limits.getLOADCritical(core):
+		if current > self.limits.getLOADCritical(core):
 			return 'CRITICAL'
-		elif current > limits.getLOADWarning(core):
+		elif current > self.limits.getLOADWarning(core):
 			return 'WARNING'
-		elif current > limits.getLOADCareful(core):
+		elif current > self.limits.getLOADCareful(core):
 			return 'CAREFUL'
 		return 'OK'
 
@@ -221,9 +225,9 @@ class sysmondisplay:
 			self.end() #ESC or q
 		elif self.pressedkey== 97:
 			self.setProcessSortedBy('auto') #a
-		elif self.pressedkey == 99 and cpu_tag:
+		elif self.pressedkey == 99 and self.cpu_tag:
 			self.setProcessSortedBy('cpu_percent') #c
-		elif self.pressedkey == 100 and disk_tag: 
+		elif self.pressedkey == 100 and self.diskio_tag: 
 			self.diskio_tag = not self.diskio_tag  #d
 		elif self.pressedkey == 102 or self.fs_tag:
 			self.fs_tag = not self.fs_tag #f
@@ -243,7 +247,7 @@ class sysmondisplay:
 	def end(self):
 		curses.echo()
 		curses.nocbreak()
-		curses.curs_set(1)
+		#curses.curs_set(1)
 		curses.endwin()
 
 	def display(self,stats):
@@ -251,7 +255,7 @@ class sysmondisplay:
 		self.displayCpu(stats.getCpu())
 		self.displayLoad(stats.getLoad(), stats.getCore())
 		self.displayMem(stats.getMem(), stats.getMemSwap())
-		#network_count = self.displayNetwork(stats.getNetwork())
+		network_count = self.displayNetwork(stats.getNetwork())
 		#diskio_count = self.displayDiskIO(stats.getDiskIo(), self.network_y + network_count)
 		#fs_count = self.displayFs(stats.getFs(), self.network_y+ network_count + diskio_count)
 		#log_count = self.displayLog(self.network_y + network_count + diskio_count + fs_count)
@@ -288,16 +292,128 @@ class sysmondisplay:
 			self.term_window.addnstr(self.system_y, self.system_x +int(screen_x / 2) - len(system_msg) / 2, system_msg, 80, curses.A_UNDERLINE)
 
 	def displayCpu(self, cpu):
-		pass
+		screen_x = self.screen.getmaxyx()[1]
+                screen_y = self.screen.getmaxyx()[0]
+                if(screen_y > self.cpu_y + 5 and screen_x > self.cpu_x + 18):
+                    self.term_window.addnstr(self.cpu_y, self.cpu_x, "CPU", 8, self.title_color if  self.hascolors else curses.A_UNDERLINE)
+                
+                    if not cpu:
+                        self.term_window.addnstr(self.cpu_y+1, self.cpu_x, ("compute data ..."),15)
+                        return 0
 
+                    self.term_window.addnstr(self.cpu_y, self.cpu_x+10,  "%.1f%%" % (100 - cpu['idle']) , 8)
+                    self.term_window.addnstr(self.cpu_y+1, self.cpu_x, ("User:") , 8)
+                    self.term_window.addnstr(self.cpu_y+2, self.cpu_x, ("Kernel:") , 8)
+                    self.term_window.addnstr(self.cpu_y+3, self.cpu_x, ("Nice:") , 8)
+                
+                    alert = self.__getCpuAlert(cpu['user']) 
+                    self.logs.add(alert,"CPU user", cpu['user'])
+                    self.term_window.addnstr(self.cpu_y+1, self.cpu_x+10, "%.1f" % cpu['user'], 8, self.__colors_list[alert])
+                
+                    alert = self.__getCpuAlert(cpu['kernel'])
+                    self.logs.add(alert,"CPU kernel", cpu['kernel'])
+                    self.term_window.addnstr(self.cpu_y+2, self.cpu_x+10, "%.1f" % cpu['kernel'], 8, self.__colors_list[alert])
+
+                    alert = self.__getCpuAlert(cpu['nice'])
+                    self.logs.add(alert,"CPU nice", cpu['nice'])
+                    self.term_window.addnstr(self.cpu_y+3, self.cpu_x+10, "%.1f" % cpu['nice'], 8, self.__colors_list[alert])
+                    
 	def displayLoad(self, load, core):
-		pass
+                if not load:
+                    return 0
+
+		screen_x = self.screen.getmaxyx()[1]
+                screen_y = self.screen.getmaxyx()[0]
+                if(screen_y > self.cpu_y + 5 and screen_x > self.cpu_x + 18):
+                    self.term_window.addnstr(self.load_y, self.load_x, "Load", 8, self.title_color if  self.hascolors else curses.A_UNDERLINE)
+                
+                    self.term_window.addnstr(self.load_y, self.load_x+10,  str(core)+("-Core"), 8)
+                    self.term_window.addnstr(self.load_y+1, self.load_x, ("1 min:") , 8)
+                    self.term_window.addnstr(self.load_y+2, self.load_x, ("5 min:") , 8)
+                    self.term_window.addnstr(self.load_y+3, self.load_x, ("15 min:") , 8)
+                
+                    self.term_window.addnstr(self.load_y+1, self.load_x+10, "%.2f" % load['min1'], 8)
+                
+                    alert = self.__getLoadAlert(load['min5'],core)
+                    self.logs.add(alert,"LOAD 5-min", load['min5'])
+                    self.term_window.addnstr(self.load_y+2, self.load_x+10, "%.2f" % load['min5'], 8,self.__colors_list[alert])
+
+                    alert = self.__getLoadAlert(load['min15'],core)
+                    self.logs.add(alert,"LOAD 15-min", load['min15'])
+                    self.term_window.addnstr(self.load_y+3, self.load_x+10, "%.2f" % load['min15'], 8,self.__colors_list[alert])
+
 	
 	def displayMem(self, mem, memswap):
-		pass
+		
+                if not mem or not memswap:
+                    return 0
+
+		screen_x = self.screen.getmaxyx()[1]
+                screen_y = self.screen.getmaxyx()[0]
+                if(screen_y > self.cpu_y + 5 and screen_x > self.cpu_x + 38):
+                    self.term_window.addnstr(self.mem_y, self.mem_x, "Mem", 8, self.title_color if  self.hascolors else curses.A_UNDERLINE)
+                
+                    self.term_window.addnstr(self.mem_y+1, self.mem_x,  ("Total:"), 8)
+                    self.term_window.addnstr(self.mem_y+2, self.mem_x, ("Used:") , 8)
+                    self.term_window.addnstr(self.mem_y+3, self.mem_x, ("Free:") , 8)
+                
+                
+                    self.term_window.addnstr(self.mem_y, self.mem_x+9, "{:.1%}".format(mem['percent']/100), 8)
+                    self.term_window.addnstr(self.mem_y+1, self.mem_x+9, self.__autoUnit(mem['total']), 8)
+                    self.term_window.addnstr(self.mem_y+2, self.mem_x+9, self.__autoUnit(mem['used']), 8)
+                    self.term_window.addnstr(self.mem_y+3, self.mem_x+9, self.__autoUnit(mem['free']), 8)
+
+                    real_used_phymem = mem['used'] - mem['cache']
+                    if real_used_phymem < 0:
+                        real_used_phymem = mem['used']
+                    real_free_phymem = mem['free'] + mem['cache']
+                    alert = self.__getMemAlert(real_used_phymem, mem['total'])
+                    self.logs.add(alert,"MEM real",real_used_phymem)
+                    self.term_window.addnstr(self.mem_y+2, self.mem_x+15, "({0})".format(self.__autoUnit(real_used_phymem)), 8,self.__colors_list[alert])
+                    self.term_window.addnstr(self.mem_y+3, self.mem_x+15, "({0})".format(self.__autoUnit(real_free_phymem)), 8)
+                
+                    self.term_window.addnstr(self.mem_y, self.mem_x+25, "Swap", 8, self.title_color if self.hascolors else curses.A_UNDERLINE)
+                    self.term_window.addnstr(self.mem_y+1, self.mem_x+25, ('Total:'), 8)
+                    self.term_window.addnstr(self.mem_y+2, self.mem_x+25, ('Userd:'), 8)
+                    self.term_window.addnstr(self.mem_y+3, self.mem_x+25, ('Free:'), 8)
+
+                    self.term_window.addnstr(self.mem_y, self.mem_x+34, "{:.1%}".format(memswap['percent']/100), 8)
+                    alert = self.__getMemAlert(memswap['used'], memswap['total'])
+                    self.logs.add(alert,"MEM swap", memswap['used'])
+                    self.term_window.addnstr(self.mem_y+1, self.mem_x+34, self.__autoUnit(memswap['total']), 8)
+                    self.term_window.addnstr(self.mem_y+2, self.mem_x+34, self.__autoUnit(memswap['used']), 8,self.__colors_list[alert])
+                    self.term_window.addnstr(self.mem_y+3, self.mem_x+34, self.__autoUnit(memswap['free']), 8)
 
 	def displayNetwork(self, network):
-		pass
+                if not self.network_tag: 
+                    return 0
+                else:
+                    print 'network_tag is true'
+
+		screen_x = self.screen.getmaxyx()[1]
+                screen_y = self.screen.getmaxyx()[0]
+                if(screen_y > self.network_y + 3 and screen_x > self.network_x + 28):
+                    self.term_window.addnstr(self.network_y, self.network_x, "Network", 8, self.title_color if  self.hascolors else curses.A_UNDERLINE)
+                    self.term_window.addnstr(self.network_y, self.network_x+10,  ("Rx/ps"), 8)
+                    self.term_window.addnstr(self.network_y, self.network_x+19, ("Tx/ps") , 8)
+                    if not network:
+                        self.term_window.addnstr(self.network_y+1, self.network_x, ("compute data") , 15)
+                        return 3
+                    else:
+                        print 'network can be cal'
+                    
+                    ret =2
+                    net_num = min(screen_y - self.network_y-3, len(network))
+                    for i in xrange(0,net_num):
+                        elapsed_time = max(1, self.__refresh_time)
+                        self.term_window.addnstr(self.network_y+1+i, self.network_x, network[i]['interface_name']+':', 8)
+                        self.term_window.addnstr(self.network_y+1+i, self.network_x+10, self.__autoUnit(network[i]['rx'] / elapsed_time * 8)+'b', 8)
+                        self.term_window.addnstr(self.network_y+1+i, self.network_x+19, self.__autoUnit(network[i]['tx'] / elapsed_time * 8)+'b', 8)
+                        ret = ret + 1
+                    return ret
+                else:
+                    print '{0} {1} {2} {3}'.format(screen_y, self.network_y+3, screen_x, self.network_x+28)
+                return 0
 
 	def displayDiskIO(self, diskio, offset_y=0):
 		pass
@@ -313,14 +429,25 @@ class sysmondisplay:
 		pass
 
 	def displayCaption(self):
-		pass
+		screen_x = self.screen.getmaxyx()[1]
+                screen_y = self.screen.getmaxyx()[0]
+                msg = ("Press 'h' for help")
+                if(screen_y > self.caption_y  and screen_x > self.caption_x+32 ):
+                    self.term_window.addnstr(max(self.caption_y, screen_y-1), self.caption_x,  msg, self.default_color)
 	
 	def displayHelp(self):
 		pass
 
 	def displayNow(self, now):
-		pass
+                if not now :
+                    return 0
 
+		screen_x = self.screen.getmaxyx()[1]
+                screen_y = self.screen.getmaxyx()[0]
+                if(screen_y > self.now_y  and screen_x > self.now_x ):
+                    now_msg = now.strftime("%Y-%m-%d %H:%M:%S")
+                    self.term_window.addnstr(max(self.now_y, screen_y-1), max(self.now_x, screen_x-1)-len(now_msg),  now_msg, len(now_msg))
+                
 
 if __name__ == "__main__":
     myglobal.set_ps_network_io_tag(True)
@@ -337,5 +464,3 @@ if __name__ == "__main__":
         screen.update(status)
         if screen.isrunning == 0:
             sys.exit(0)
-        else:
-            print "running....."
