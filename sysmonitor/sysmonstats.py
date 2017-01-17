@@ -287,12 +287,18 @@ class sysmonstats:
 
 	def getDiskIo(self):
 		if myglobal.get_ps_disk_io_tag():
+                    if myglobal.get_disk_io_sort_tag():
+			return sorted(self.diskio,key=lambda diskio:diskio[myglobal.get_disk_io_sort_tag()], reverse = True)
+                    else:
 			return sorted(self.diskio,key=lambda diskio:diskio['disk_name'])
 		else:
 			return 0
 
 	def getFs(self):
 		if myglobal.get_ps_fs_usage_tag():
+                    if myglobal.get_fs_usage_sort_tag():
+			return sorted(self.fs, key=lambda fs: fs[myglobal.get_fs_usage_sort_tag()], reverse = True)
+                    else:
 			return sorted(self.fs, key=lambda fs: fs['mnt_point'])
 		else:
 			return 0

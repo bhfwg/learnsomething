@@ -5,6 +5,7 @@ from sysmonlimits import sysmonlimits
 from sysmonlogs import sysmonlogs
 import myglobal
 import traceback
+from datetime import datetime 
 import sys
 class sysmondisplay:
 	def __init__(self, refresh_time =1):
@@ -46,6 +47,10 @@ class sysmondisplay:
 		self.now_y = 3
 		self.caption_x =0
 		self.caption_y = 3
+
+                self.network_count = 0
+                self.diskio_count = 0
+                self.fs_count = 0
 
 		self.screen = curses.initscr()
 		if not self.screen:
@@ -256,10 +261,10 @@ class sysmondisplay:
 		self.displayCpu(stats.getCpu())
 		self.displayLoad(stats.getLoad(), stats.getCore())
 	        self.displayMem(stats.getMem(), stats.getMemSwap())
-                network_count = self.displayNetwork(stats.getNetwork())
-		diskio_count = self.displayDiskIO(stats.getDiskIo(), self.network_y + network_count)
-		fs_count = self.displayFs(stats.getFs(), self.network_y+ network_count + diskio_count)
-		#log_count = self.displayLog(self.network_y + network_count + diskio_count + fs_count)
+                self.network_count = self.displayNetwork(stats.getNetwork())
+		self.diskio_count = self.displayDiskIO(stats.getDiskIo(), self.network_y + self.network_count)
+		self.fs_count = self.displayFs(stats.getFs(), self.network_y+ self.network_count + self.diskio_count)
+		log_count = self.displayLog(self.network_y + self.network_count + self.diskio_count + self.fs_count)
 		#self.displayProcess(stats.getProcessCount(), stats.getProcessList(screen.getProcessSortedBlog_count), log_count)
 		self.displayCaption()
 		self.displayNow(stats.getNow())
@@ -310,15 +315,15 @@ class sysmondisplay:
                     self.term_window.addnstr(self.cpu_y+3, self.cpu_x, ("Nice:") , 8)
                 
                     alert = self.__getCpuAlert(cpu['user']) 
-                    self.logs.add(alert,"CPU user", cpu['user'])
+                    self.logs.add(alert,"CPU user", cpu['user'])#"CPU user"
                     self.term_window.addnstr(self.cpu_y+1, self.cpu_x+10, "%.1f" % cpu['user'], 8, self.__colors_list[alert])
                 
                     alert = self.__getCpuAlert(cpu['kernel'])
-                    self.logs.add(alert,"CPU kernel", cpu['kernel'])
+                    self.logs.add(alert,"CPU kernel", cpu['kernel'])#"CPU kernel"
                     self.term_window.addnstr(self.cpu_y+2, self.cpu_x+10, "%.1f" % cpu['kernel'], 8, self.__colors_list[alert])
 
                     alert = self.__getCpuAlert(cpu['nice'])
-                    self.logs.add(alert,"CPU nice", cpu['nice'])
+                    self.logs.add(alert,"CPU nice", cpu['nice'])#"CPU nice"
                     self.term_window.addnstr(self.cpu_y+3, self.cpu_x+10, "%.1f" % cpu['nice'], 8, self.__colors_list[alert])
                     
 	def displayLoad(self, load, core):
@@ -337,11 +342,11 @@ class sysmondisplay:
                     self.term_window.addnstr(self.load_y+1, self.load_x+10, "%.2f" % load['min1'], 8)
                 
                     alert = self.__getLoadAlert(load['min5'],core)
-                    self.logs.add(alert,"LOAD 5-min", load['min5'])
+                    self.logs.add(alert,"LOAD 5-min", load['min5'])#"LOAD 5-min"
                     self.term_window.addnstr(self.load_y+2, self.load_x+10, "%.2f" % load['min5'], 8,self.__colors_list[alert])
 
                     alert = self.__getLoadAlert(load['min15'],core)
-                    self.logs.add(alert,"LOAD 15-min", load['min15'])
+                    self.logs.add(alert,"LOAD 15-min", load['min15'])#"LOAD 15-min"
                     self.term_window.addnstr(self.load_y+3, self.load_x+10, "%.2f" % load['min15'], 8,self.__colors_list[alert])
 
 	
@@ -368,7 +373,7 @@ class sysmondisplay:
                         real_used_phymem = mem['used']
                     real_free_phymem = mem['free'] + mem['cache']
                     alert = self.__getMemAlert(real_used_phymem, mem['total'])
-                    self.logs.add(alert,"MEM real",real_used_phymem)
+                    self.logs.add(alert,"MEM real",real_used_phymem)#MEM real
                     self.term_window.addnstr(self.mem_y+2, self.mem_x+15, "({0})".format(self.__autoUnit(real_used_phymem)), 8,self.__colors_list[alert])
                     self.term_window.addnstr(self.mem_y+3, self.mem_x+15, "({0})".format(self.__autoUnit(real_free_phymem)), 8)
                 
@@ -379,7 +384,7 @@ class sysmondisplay:
 
                     self.term_window.addnstr(self.mem_y, self.mem_x+34, "{:.1%}".format(memswap['percent']/100), 8)
                     alert = self.__getMemAlert(memswap['used'], memswap['total'])
-                    self.logs.add(alert,"MEM swap", memswap['used'])
+                    self.logs.add(alert,"MEM swap", memswap['used'])#MEM swap
                     self.term_window.addnstr(self.mem_y+1, self.mem_x+34, self.__autoUnit(memswap['total']), 8)
                     self.term_window.addnstr(self.mem_y+2, self.mem_x+34, self.__autoUnit(memswap['used']), 8,self.__colors_list[alert])
                     self.term_window.addnstr(self.mem_y+3, self.mem_x+34, self.__autoUnit(memswap['free']), 8)
@@ -429,6 +434,8 @@ class sysmondisplay:
                         self.term_window.addnstr(self.diskio_y+1+disk, self.diskio_x, diskio[disk]['disk_name']+':', len(diskio[disk]['disk_name'])+1)
                         self.term_window.addnstr(self.diskio_y+1+disk, self.diskio_x+10, self.__autoUnit(diskio[disk]['write_bytes'] / elapsed_time )+'B', 8)
                         self.term_window.addnstr(self.diskio_y+1+disk, self.diskio_x+19, self.__autoUnit(diskio[disk]['read_bytes'] / elapsed_time )+'B', 8)
+                        if disk > 10:
+                            break
                     return disk+3
                 return 0
 
@@ -449,11 +456,50 @@ class sysmondisplay:
                         self.term_window.addnstr(self.fs_y+1+mounted, self.fs_x, fs[mounted]['mnt_point'], len(fs[mounted]['mnt_point']))
                         self.term_window.addnstr(self.fs_y+1+mounted, self.fs_x+10, self.__autoUnit(fs[mounted]['size']), 8)
                         self.term_window.addnstr(self.fs_y+1+mounted, self.fs_x+19, self.__autoUnit(fs[mounted]['used']), 8,self.__getFsColor(fs[mounted]['used'], fs[mounted]['size']))
+                        if mounted >10:
+                            break
                     return mounted+3
                 return 0
 
 	def displayLog(self, offset_y=0):
-		pass
+                if self.logs.len()==0 or not self.log_tag: 
+                    #self.term_window.addnstr(0, 0,"logs:"+str(self.logs.len()), 8)
+                    return 0
+                else:
+                    #self.term_window.addnstr(1, 0,"logs:"+str(self.logs.len()), 8)
+                    pass
+                    
+		screen_x = self.screen.getmaxyx()[1]
+                screen_y = self.screen.getmaxyx()[0]
+                self.log_y = offset_y
+                if(screen_y > (self.log_y + 3) and screen_x > (self.log_x + 79)):
+                    self.log_y = max(offset_y, screen_y-3-min(offset_y -3, screen_y-self.log_y, self.logs.len()))
+                    logtodisplay = min(screen_y-self.log_y-3, self.logs.len())
+                    logmsg = ("WARNING|CRITICAL| logs for CPU|LOAD|MEM ")
+                    if(logtodisplay > 1):
+                        logmsg +=("lasts " + str(logtodisplay) + " entries")
+                    else:
+                        logmsg +=("one entry")
+                    self.term_window.addnstr(self.log_y, self.log_x, logmsg, 79, self.title_color if  self.hascolors else curses.A_UNDERLINE)
+                    ii =0
+                    log = self.logs.get()
+                    for ii in xrange(0,logtodisplay):
+                        logmsg = "  " + str(datetime.fromtimestamp(log[ii][0]))
+                        if (log[ii][1] > 0):
+                            logmark = ' '
+                            logmark += (' > ')+ str(datetime.fromtimestamp(log[ii][1]))
+                        else:
+                            logmark='~'
+                            logmark += (' > ')+ "%19s" %"___________________"
+
+                        if log[ii][3][:3] =="MEM":
+                            logmsg += " {0} ({1}/{2}/{3})".format(log[ii][3], self.__autoUnit(log[ii][6]), self.__autoUnit(log[ii][5]), self.__autoUnit(log[ii][4]))
+                        else:
+                            logmsg += " {0} ({1:.1f}/{2:.1f}/{3:.1f})".format(log[ii][3], log[ii][6], log[ii][5], log[ii][4])
+                        self.term_window.addnstr(self.log_y+1+ii, self.log_x, logmsg, 79)
+                        self.term_window.addnstr(self.log_y+1+ii, self.log_x, logmark, 1, self.__colors_list[log[ii][2]])
+                    return ii +3
+                return 0
 
 
 	def displayProcess(self, processcount, processlist, log_count=0):

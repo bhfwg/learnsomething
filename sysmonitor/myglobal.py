@@ -3,6 +3,22 @@ ps_mem_usage_tag = False
 ps_fs_usage_tag = False
 ps_disk_io_tag = False
 ps_network_io_tag = False
+
+ps_disk_io_sort_tag = 'write_bytes'
+ps_fs_usage_sort_tag = 'size'
+
+def get_disk_io_sort_tag():
+    return ps_disk_io_sort_tag
+def set_disk_io_sort_tag(v):
+    global ps_disk_io_sort_tag 
+    ps_disk_io_sort_tag = v    
+
+def get_fs_usage_sort_tag():
+    return ps_fs_usage_sort_tag
+def set_fs_usage_sort_tag(v):
+    global ps_fs_usage_sort_tag 
+    ps_fs_usage_sort_tag = v    
+
 def get_ps_cpu_percent_tag():
     return ps_cpu_percent_tag
 def set_ps_cpu_percent_tag(v):
