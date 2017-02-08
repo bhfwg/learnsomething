@@ -11,6 +11,12 @@ class sysmoncsv:
 		except IOError, error:
 			print _('can not create the output csv file', error[1])
 			sys.exit(0)
+        def exit(self):
+            try:
+                self._csvfile_fd.close()
+            except Exception:
+                pass
+
 	def update(self,stats):
 		if stats.getCpu():
 			cpu = stats.getCpu()

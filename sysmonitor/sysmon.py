@@ -1,16 +1,9 @@
 #!/usr/bin/env python
 from __future__ import generators
-__appname__ = 'sysmonitor';
+__appname__ = 'sysmon';
 __version__ = '1.0'
 __author__ = 'bhfwg'
 __license__ = 'LGPL'
-#global ps_cpu_percent_tag
-#global ps_mem_usage_tag
-#global ps_fs_usage_tag
-#global ps_disk_io_tag
-#global ps_network_io_tag
-
-import os
 import sys
 import platform
 import getopt
@@ -18,8 +11,8 @@ import signal
 import time
 from datetime import datetime, timedelta
 import gettext
-from sysmonlimits import sysmonlimits
-from sysmonlogs import sysmonlogs
+#from sysmonlimits import sysmonlimits
+#from sysmonlogs import sysmonlogs
 from sysmonstats import sysmonstats
 from sysmoncsv import sysmoncsv
 from sysmondisplay import sysmondisplay
@@ -91,37 +84,44 @@ except ImportError:
 else:
 	csvlib_tag = True
 
-print
-print 'ps_cpu_percent_tag=', myglobal.get_ps_cpu_percent_tag()
-print 'ps_mem_usage_tag=',myglobal.get_ps_mem_usage_tag()
-print 'ps_fs_usage_tag=', myglobal.get_ps_fs_usage_tag()
-print 'ps_disk_io_tag=',myglobal.get_ps_disk_io_tag()
-print 'ps_network_io_tag=',myglobal.get_ps_network_io_tag()
-print 'jinjia_tag=', jinjia_tag 
-print 'csvlib_tag=', csvlib_tag 
-print
+#print
+#print 'ps_cpu_percent_tag=', myglobal.get_ps_cpu_percent_tag()
+#print 'ps_mem_usage_tag=',myglobal.get_ps_mem_usage_tag()
+#print 'ps_fs_usage_tag=', myglobal.get_ps_fs_usage_tag()
+#print 'ps_disk_io_tag=',myglobal.get_ps_disk_io_tag()
+#print 'ps_network_io_tag=',myglobal.get_ps_network_io_tag()
+#print 'jinjia_tag=', jinjia_tag 
+#print 'csvlib_tag=', csvlib_tag 
+#print
 
 def printVersion():
-	print _("sysmonitor version : ") + __version__
+	print _("sysmon version : ") + __version__
 
 def printSyntax():
 	printVersion()
-	print _("usage: sysmonitor [-f file] [-o output] [-t sec] [-h] [-v]")
+	print _("usage: sysmon [-f file] [-o output] [-t sec] [-h] [-v]")
 	print _("\t-d\t\tDisable disk I/O module")
-	print _("\t-f file\t\tSet the output folder (HTML) or file (CVS)")
-	print _("\t-h\t\tDisplay the syntax and exit")
 	print _("\t-m\t\tDisable mount module")
 	print _("\t-n\t\tDisable network module")
-	print _("\t-o output\t\tDefine additional output (avaiable: HTML or CVS)")
+	print _("\t-f file\t\tSet the output folder (HTML) or file (CSV")
+	print _("\t-h\t\tDisplay the syntax and exit")
+	print _("\t-o output\tDefine additional output (avaiable: HTML or CVS)")
 	print _("\t-t sec\t\tSet the refresh time in seconds(default: %d)" % refresh_time) 
 	print _("\t-v\t\tDisplay the version and exit")	
 	
 def init():
-	global limits, logs, stats, screen
+	#global limits, logs, stats, screen
+	global stats, screen
 	global htmloutput, csvoutput
 	global html_tag, csv_tag
 	global refresh_time
 	
+        myglobal.set_ps_network_io_tag(True)
+        myglobal.set_ps_disk_io_tag(True)
+        myglobal.set_ps_fs_usage_tag(True)
+        myglobal.set_ps_mem_usage_tag(True)
+        myglobal.set_ps_cpu_percent_tag(True)
+
 	html_tag = False
 	csv_tag = False
 	refresh_time  = 2
@@ -135,6 +135,9 @@ def init():
 		if opt in ("-v", "--version"):
 			printVersion()
 			sys.exit(0)
+		elif opt in ("-h", "--help"):
+                        printSyntax()
+                        sys.exit(0)
 		elif opt in ("-o", "--output"):
 			if arg == "html":
 				if jinja_tag:
@@ -147,6 +150,7 @@ def init():
 			elif arg == "csv":
 					if csvlib_tag:
 						csv_tag = True
+                                                print 'csv_tag is true 1'
 					else:
 						print _("Error: Need CSV library to export to CSV")
 						sys.exit(2)
@@ -178,6 +182,7 @@ def init():
 			print _("Error: HTML export (-o html) need output folder definition (-f <folder>)")
 			sys.exit(2)
 	if csv_tag:
+                print 'csv_tag is true 2'
 		try:
 			output_file
 		except UnboundLocalError:
@@ -186,19 +191,21 @@ def init():
 			sys.exit(2)
 	
 	signal.signal(signal.SIGINT, signal_handler)
-	limits = sysmonlimits()
-	logs = sysmonlogs()
+        #limits = sysmonlimits()
+	#logs = sysmonlogs()
 	stats = sysmonstats()
 
 	if html_tag:
-		htmloutput = sysmonhtml(htmlfolder= output_folder,refresh_time = refresh_time)
+		htmloutput = sysmonhtml(htmlfolder= output_folder, refresh_time = refresh_time)
 	if csv_tag:
-		csvoutput = sysmoncsv(csvfile =output_file,refresh_time=refresh_time)
+		csvoutput = sysmoncsv(csvfile = output_file, refresh_time=refresh_time)
 
 	screen = sysmondisplay(refresh_time=refresh_time)
 
 def main():
-	print _("-------------------sysmonitor start--------------------")
+        #python sysmon.py -f ./test.csv -o csv -t 2
+	print _("-------------------sysmon start--------------------")
+
 	init()
 	while True:
 		stats.update()
@@ -207,11 +214,12 @@ def main():
 			htmloutput.update(stats)
 		if csv_tag:
 			csvoutput.update(stats)
-	print _("-------------------sysmonitor end--------------------")
+                        
+	print _("-------------------sysmon end--------------------")
 
 def end():
 	screen.end()
-	print _("-------------------sysmonitor end--------------------")
+	print _("-------------------sysmon end--------------------")
 	if csv_tag:
 		csvoutput.exit()
 	sys.exit(0)
