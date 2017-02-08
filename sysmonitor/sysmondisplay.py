@@ -6,8 +6,10 @@ from sysmonlogs import sysmonlogs
 import myglobal
 import traceback
 from datetime import datetime 
+from datetime import timedelta 
 import sys
 class sysmondisplay:
+        __process_sortedby = 'auto'
 	def __init__(self, refresh_time =1):
 		#global ps_network_io_tag
 		#global ps_disk_io_tag
@@ -142,11 +144,11 @@ class sysmondisplay:
 		self.pressedkey = -1
                 self.isrunning = 1
 
-	def setProcessSortedBy(self,sorted):
+	def setProcesssortedBy(self,sorted):
 		self.__process_sortedautoflag = False
 		self.__process_sortedby = sorted
 
-	def getProcessSortedBy(self):
+	def getProcesssortedBy(self):
 		return self.__process_sortedby
 
 	def __autoUnit(self, val):
@@ -229,9 +231,9 @@ class sysmondisplay:
                         self.isrunning = 0
 			self.end() #ESC or q
 		elif self.pressedkey== 97:
-			self.setProcessSortedBy('auto') #a sort process auto
+			self.setProcesssortedBy('auto') #a sort process auto
 		elif self.pressedkey == 99 and myglobal.get_ps_cpu_percent_tag():
-			self.setProcessSortedBy('cpu_percent') #c sort process by cpu_percent
+			self.setProcesssortedBy('cpu_percent') #c sort process by cpu_percent
 		elif self.pressedkey == 100 and myglobal.get_ps_disk_io_tag(): 
 			self.diskio_tag = not self.diskio_tag  #d show/hide diskio stat
 		elif self.pressedkey == 102 and myglobal.get_ps_fs_usage_tag():
@@ -241,11 +243,11 @@ class sysmondisplay:
 		elif self.pressedkey == 108:
 			self.log_tag = not self.log_tag #l show/hide log message
 		elif self.pressedkey == 109:
-			self.setProcessSortedBy('mem_percent') #m sort process by Mem usage
+			self.setProcesssortedBy('mem_percent') #m sort process by Mem usage
 		elif self.pressedkey == 110 and myglobal.get_ps_network_io_tag():
 			self.network_tag = not self.network_tag #n show/hide network state
 		elif self.pressedkey == 112:
-			self.setProcessSortedB('proc_name')#p sort process by name
+			self.setProcesssortedBy('proc_name')#p sort process by name
 
 		return self.pressedkey
 
@@ -265,7 +267,7 @@ class sysmondisplay:
 		self.diskio_count = self.displayDiskIO(stats.getDiskIo(), self.network_y + self.network_count)
 		self.fs_count = self.displayFs(stats.getFs(), self.network_y+ self.network_count + self.diskio_count)
 		log_count = self.displayLog(self.network_y + self.network_count + self.diskio_count + self.fs_count)
-		#self.displayProcess(stats.getProcessCount(), stats.getProcessList(screen.getProcessSortedBlog_count), log_count)
+		self.displayProcess(stats.getProcessCount(), stats.getProcessList(self.getProcesssortedBy()), log_count)
 		self.displayCaption()
 		self.displayNow(stats.getNow())
 		self.displayHelp()
@@ -503,7 +505,111 @@ class sysmondisplay:
 
 
 	def displayProcess(self, processcount, processlist, log_count=0):
-		pass
+		if not processcount: 
+                    return 0
+		screen_x = self.screen.getmaxyx()[1]
+                screen_y = self.screen.getmaxyx()[0]
+                if ( not self.network_tag and not self.diskio_tag and not self.fs_tag):
+                    process_x = 0
+                else:
+                    process_x = self.process_x                
+
+                if(screen_y > (self.process_y + 3) and screen_x > (self.process_x + 48)):
+                    self.term_window.addnstr(self.process_y, process_x, "Processes", 9, self.title_color if  self.hascolors else curses.A_UNDERLINE)
+                    other = (processcount['total'] - processcount['running'] - processcount['sleeping'])
+                    self.term_window.addnstr(self.process_y, process_x+10,  "{0}, {1} {2}, {3} {4}, {5} {6}".format(str(processcount['total']), str(processcount['running']), 'running', str(processcount['sleeping']), 'sleeping', str(other), 'other'), 42)
+                tag_pid = False
+                tag_uid = False
+                tag_nice = False
+                tag_status = False
+                tag_proc_time = False
+                if screen_x > process_x + 55:
+                    tag_pid =True
+                if screen_x > process_x + 64:
+                    tag_uid =True
+                if screen_x > process_x + 70:
+                    tag_nice =True
+                if screen_x > process_x + 74:
+                    tag_status =True
+                if screen_x > process_x + 77:
+                    tag_proc_time =True
+
+                if (screen_y > self.process_y+8 and screen_x > process_x+49):
+                    self.term_window.addnstr(self.process_y+2, process_x, ("VIRT") , 5)
+                    self.term_window.addnstr(self.process_y+2, process_x+7, ("RES") , 5)
+                    self.term_window.addnstr(self.process_y+2, process_x+14, ("CPU%"),5 , curses.A_UNDERLINE if self.getProcesssortedBy() == 'cpu_percent' else 0)
+                    self.term_window.addnstr(self.process_y+2, process_x+21, ("MEM%"),5 , curses.A_UNDERLINE if self.getProcesssortedBy() == 'mem_percent' else 0)
+                    process_name_x =28
+                    if  tag_pid:
+                        self.term_window.addnstr(self.process_y+2, process_x + process_name_x, ("PID"), 6)
+                        process_name_x += 7
+                    if  tag_uid:
+                        self.term_window.addnstr(self.process_y+2, process_x + process_name_x, ("USER"), 8)
+                        process_name_x += 10
+                    if  tag_nice:
+                        self.term_window.addnstr(self.process_y+2, process_x + process_name_x, ("NI"), 3)
+                        process_name_x += 4
+                    if  tag_status:
+                        self.term_window.addnstr(self.process_y+2, process_x + process_name_x, ("S"), 1)
+                        process_name_x += 3
+                    if  tag_proc_time:
+                        self.term_window.addnstr(self.process_y+2, process_x + process_name_x, ("TIME+"), 8)
+                        process_name_x += 10
+                    
+                    self.term_window.addnstr(self.process_y+2, process_x+process_name_x, ("NAME"), 12, curses.A_UNDERLINE if self.getProcesssortedBy() == 'proc_name' else 0)
+
+                    if not processlist:
+                        self.term_window.addnstr(self.process_y+3, self.process_x, ("Compute data..."), 15)
+                        return 6
+
+                    proc_num = min(screen_y - self.term_h+self.process_y-log_count+5, len(processlist))
+
+                    for processes in xrange(0, proc_num):
+                        process_size = processlist[processes]['proc_size']
+                        self.term_window.addnstr(self.process_y+3+processes, process_x, self.__autoUnit(process_size),5)
+                        process_resident = processlist[processes]['proc_resident']
+                        self.term_window.addnstr(self.process_y+3+processes, process_x+7, self.__autoUnit(process_resident),5)
+
+                        cpu_percent = processlist[processes]['cpu_percent']
+                        if myglobal.get_ps_cpu_percent_tag():
+                            self.term_window.addnstr(self.process_y+3+processes, process_x+14, "{:.1f}".format(cpu_percent),5,self.__getProcessColor(cpu_percent))
+                        else:
+                            self.term_window.addnstr(self.process_y+3+processes, process_x, "N/A", 8)
+                    
+                        mem_percent = processlist[processes]['mem_percent']
+                        self.term_window.addnstr(self.process_y+3+processes, process_x+21, "{:.1f}".format(mem_percent),5,self.__getProcessColor(mem_percent))
+                        
+                        if tag_pid:
+                            pid = processlist[processes]['pid']
+                            self.term_window.addnstr(self.process_y+3+processes, process_x+28, str(pid),6)
+
+                        if tag_uid:
+                            uid = processlist[processes]['uid']
+                            self.term_window.addnstr(self.process_y+3+processes, process_x+35, str(uid),8)
+
+                        if tag_nice:
+                            nice = processlist[processes]['nice']
+                            self.term_window.addnstr(self.process_y+3+processes, process_x+45, str(nice),3)
+
+                        if tag_status:
+                            status = processlist[processes]['status']
+                            self.term_window.addnstr(self.process_y+3+processes, process_x+49, str(nice),1)
+
+                        if tag_proc_time:
+                            process_time = processlist[processes]['proc_time']
+                            dtime = timedelta(seconds=sum(process_time))
+                            dtime = '{0}:{1}.{2}'.format(str(dtime.seconds//60 %60).zfill(2), str(dtime.seconds%60).zfill(2), str(dtime.microseconds)[:2])
+                            self.term_window.addnstr(self.process_y+3+processes, process_x+52, dtime, 8)
+
+                        max_process_name = screen_x - process_x - process_name_x
+                        process_name = processlist[processes]['proc_name']
+                        process_cmdline = processlist[processes]['proc_cmdline']
+                        if (len(process_cmdline) > max_process_name or len(process_cmdline)==0):
+                            command = process_name
+                        else:
+                            command = process_cmdline
+                        self.term_window.addnstr(self.process_y+3+processes, process_x + process_name_x, str(command), max_process_name)
+
 
 	def displayCaption(self):
 		screen_x = self.screen.getmaxyx()[1]
@@ -535,7 +641,7 @@ class sysmondisplay:
                     self.term_window.addnstr(self.help_y+9, self.help_x, "{0:^{width}} {1}".format("d","show/hide disk I/O stats","(need psutil 0.2.0+)",width=width),  79, self.ifCRITICAL_color2 if myglobal.get_ps_disk_io_tag() else 0)
                     self.term_window.addnstr(self.help_y+10, self.help_x, "{0:^{width}} {1}".format("f","show/hide file system stats","(need psutil 0.2.0+)",width=width),  79, self.ifCRITICAL_color2 if myglobal.get_ps_fs_usage_tag() else 0)
                     self.term_window.addnstr(self.help_y+11, self.help_x, "{0:^{width}} {1}".format("n","show/hide network stats","(need psutil 0.2.0+)",width=width),  79, self.ifCRITICAL_color2 if myglobal.get_ps_network_io_tag() else 0)
-                    self.term_window.addnstr(self.help_y+12, self.help_x, "{0:^{width}} {1}".format("p","show/hide log message (only available if display >24 lines",width=width),  79)
+                    self.term_window.addnstr(self.help_y+12, self.help_x, "{0:^{width}} {1}".format("l","show/hide log message (only available if display >24 lines",width=width),  79)
                     self.term_window.addnstr(self.help_y+13, self.help_x, "{0:^{width}} {1}".format("h","show/hide this help message",width=width),  79)
                     self.term_window.addnstr(self.help_y+14, self.help_x, "{0:^{width}} {1}".format("q","Quit (Esc and Ctrl-C also work)",width=width),  79)
 

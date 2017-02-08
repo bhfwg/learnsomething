@@ -239,6 +239,7 @@ class sysmonstats:
 			        procstate['nice'] = proc.nice()
                                 procstate['status'] = str(proc.status())[:1].upper()
 				procstate['proc_time'] = proc.cpu_times()
+				procstate['proc_name'] = proc.name()
 				procstate['proc_cmdline']=' '.join(proc.cmdline())
 				self.process.append(procstate)
 			    except Exception,e:

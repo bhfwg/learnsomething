@@ -4,10 +4,10 @@ class sysmonlimits:
 	__limits_list = {'STD':[50,70,90], 'LOAD':[0.7,1.0,5.0]}
 	#__limits_list = {'STD':[10,20,30], 'LOAD':[0.5,1.0,1.5]}
 	
-	def __init__(self,careful=50, warning=70, critical=90):
-		self.__limits_list['STD'] = [careful,warning,critical]
-	#def __init__(self,careful=10, warning=20, critical=30):
+	#def __init__(self,careful=50, warning=70, critical=90):
 		#self.__limits_list['STD'] = [careful,warning,critical]
+	def __init__(self,careful=10, warning=20, critical=30):
+		self.__limits_list['STD'] = [careful,warning,critical]
 	
 	def getSTDCareful(self):
 		return self.__limits_list['STD'][0]
