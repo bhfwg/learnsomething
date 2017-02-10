@@ -26,12 +26,17 @@ except ImportError:
 	print _('curses module not found')
 	sys.exit(1)
 
+ps_version = 'x.x'
+
 try:
 	import psutil as ps
+        ps_version = ps.__version__
 except ImportError:
 	print _('psutil module not found')
 	print _('using pip install psutil')
 	sys.exit(1)
+
+myglobal.set_version(__version__, ps_version)
 
 try:
 	ps.Process(os.getpid()).get_cpu_percent(interval=0)
@@ -95,7 +100,8 @@ else:
 #print
 
 def printVersion():
-	print _("sysmon version : ") + __version__
+        ver ="glances version:"+myglobal.glance_version+"   psutil version:"+myglobal.ps_version
+	print _(ver) 
 
 def printSyntax():
 	printVersion()
@@ -208,20 +214,21 @@ def main():
 
 	init()
 	while True:
-		stats.update()
+            if screen.isrunning == 0:
+                end()
+            else:
+                stats.update()
 		screen.update(stats)
 		if html_tag :
-			htmloutput.update(stats)
+		    htmloutput.update(stats)
 		if csv_tag:
-			csvoutput.update(stats)
-                        
-	print _("-------------------sysmon end--------------------")
+		    csvoutput.update(stats)
 
 def end():
 	screen.end()
-	print _("-------------------sysmon end--------------------")
 	if csv_tag:
 		csvoutput.exit()
+	print _("-------------------sysmon end--------------------")
 	sys.exit(0)
 
 def signal_handler(signal, frame):

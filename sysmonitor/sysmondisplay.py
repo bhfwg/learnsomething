@@ -625,7 +625,8 @@ class sysmondisplay:
                 screen_y = self.screen.getmaxyx()[0]
                 if(screen_y > (self.help_y + 23) and screen_x > (self.help_x + 79)):
                     self.erase()
-                    self.term_window.addnstr(self.help_y, self.help_x, "glances version, psutil version", 79, self.title_color if  self.hascolors else 0)
+                    ver ="glances version:"+myglobal.glance_version+"   psutil version:"+myglobal.ps_version
+                    self.term_window.addnstr(self.help_y, self.help_x, ver, 79, self.title_color if  self.hascolors else 0)
                     self.term_window.addnstr(self.help_y+2, self.help_x, "Captions: ", 79)
                     self.term_window.addnstr(self.help_y+2, self.help_x+10, "   OK   ", 8,self.default_color)
                     self.term_window.addnstr(self.help_y+2, self.help_x+18, "CAREFUL ", 8,self.ifCAREFUL_color)
@@ -635,14 +636,15 @@ class sysmondisplay:
                     width=5
                     self.term_window.addnstr(self.help_y+4, self.help_x, "{0:^{width}} {1}".format("Key","Function",width=width),  79, self.title_color if  self.hascolors else 0)
                     self.term_window.addnstr(self.help_y+5, self.help_x, "{0:^{width}} {1}".format("a","sort processes automatically","(need psutil 0.2.0+)",width=width),  79, self.ifCRITICAL_color2 if myglobal.get_ps_cpu_percent_tag() else 0)
-                    self.term_window.addnstr(self.help_y+6, self.help_x, "{0:^{width}} {1}".format("c","sort processes by CPU%","(need psutil 0.2.0+)",width=width),  79, self.ifCRITICAL_color2 if myglobal.get_ps_cpu_percent_tag() else 0)
+                    #self.term_window.addnstr(self.help_y+6, self.help_x, "{0:^{width}} {1}".format("c","sort processes by CPU%","(need psutil 0.2.0+)",width=width),  79, self.ifCRITICAL_color2 if myglobal.get_ps_cpu_percent_tag() else 0)
+                    self.term_window.addnstr(self.help_y+6, self.help_x, "{0:^{width}} {1}".format("c","sort processes by CPU%","(need psutil 0.2.0+)",width=width),  79)
                     self.term_window.addnstr(self.help_y+7, self.help_x, "{0:^{width}} {1}".format("m","sort processes by MEM%",width=width),  79)
                     self.term_window.addnstr(self.help_y+8, self.help_x, "{0:^{width}} {1}".format("p","sort processes by name",width=width),  79)
                     self.term_window.addnstr(self.help_y+9, self.help_x, "{0:^{width}} {1}".format("d","show/hide disk I/O stats","(need psutil 0.2.0+)",width=width),  79, self.ifCRITICAL_color2 if myglobal.get_ps_disk_io_tag() else 0)
                     self.term_window.addnstr(self.help_y+10, self.help_x, "{0:^{width}} {1}".format("f","show/hide file system stats","(need psutil 0.2.0+)",width=width),  79, self.ifCRITICAL_color2 if myglobal.get_ps_fs_usage_tag() else 0)
                     self.term_window.addnstr(self.help_y+11, self.help_x, "{0:^{width}} {1}".format("n","show/hide network stats","(need psutil 0.2.0+)",width=width),  79, self.ifCRITICAL_color2 if myglobal.get_ps_network_io_tag() else 0)
-                    self.term_window.addnstr(self.help_y+12, self.help_x, "{0:^{width}} {1}".format("l","show/hide log message (only available if display >24 lines",width=width),  79)
-                    self.term_window.addnstr(self.help_y+13, self.help_x, "{0:^{width}} {1}".format("h","show/hide this help message",width=width),  79)
+                    self.term_window.addnstr(self.help_y+12, self.help_x, "{0:^{width}} {1}".format("l","show/hide log messages",width=width),  79, self.ifCRITICAL_color2 if self.log_tag else 0)
+                    self.term_window.addnstr(self.help_y+13, self.help_x, "{0:^{width}} {1}".format("h","show/hide this help message",width=width),  79, self.ifCRITICAL_color2 if self.help_tag else 0)
                     self.term_window.addnstr(self.help_y+14, self.help_x, "{0:^{width}} {1}".format("q","Quit (Esc and Ctrl-C also work)",width=width),  79)
 
 

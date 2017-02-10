@@ -7,6 +7,14 @@ ps_network_io_tag = False
 ps_disk_io_sort_tag = 'write_bytes'
 ps_fs_usage_sort_tag = 'size'
 
+glance_version = 'xx'
+ps_version = 'xx'
+def set_version(glancev, psutilv):
+    global glance_version
+    global ps_version
+    glance_version = glancev
+    ps_version = psutilv
+
 def get_disk_io_sort_tag():
     return ps_disk_io_sort_tag
 def set_disk_io_sort_tag(v):
